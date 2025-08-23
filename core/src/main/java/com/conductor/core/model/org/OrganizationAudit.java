@@ -1,13 +1,12 @@
-package com.conductor.core.model.audit;
+package com.conductor.core.model.org;
 
-import com.conductor.core.model.BaseEntity;
-import com.conductor.core.model.Organization;
+import com.conductor.core.model.common.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "organization_audits")
+@Table(name = "organization_audit")
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,7 +19,7 @@ public class OrganizationAudit extends BaseEntity {
     private int totalTicketsSold;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id", nullable = false, unique = true)
+    @JoinColumn(name = "organization_id_fk", nullable = false, unique = true)
     @JsonIgnore
     private Organization organization;
 

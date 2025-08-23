@@ -1,9 +1,9 @@
 package com.conductor.core.service;
 
 import com.conductor.core.dto.EventDTO;
-import com.conductor.core.mapper.EventMapper;
-import com.conductor.core.model.Event;
-import com.conductor.core.model.Organization;
+import com.conductor.core.util.EventMapper;
+import com.conductor.core.model.event.Event;
+import com.conductor.core.model.org.Organization;
 
 import com.conductor.core.repository.EventRepository;
 

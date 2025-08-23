@@ -1,11 +1,8 @@
 package com.conductor.core.controler;
 
 import com.conductor.core.dto.EventDTO;
-import com.conductor.core.model.Event;
-import com.conductor.core.model.Operator;
 import com.conductor.core.service.EventService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

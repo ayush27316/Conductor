@@ -1,10 +1,9 @@
-package com.conductor.core.mapper;
+package com.conductor.core.util;
 
 import com.conductor.core.dto.OrganizationDTO;
-import com.conductor.core.model.Organization;
+import com.conductor.core.model.org.Organization;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface OrganizationMapper {

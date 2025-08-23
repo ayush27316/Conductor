@@ -1,4 +1,4 @@
-package com.conductor.core.model;
+package com.conductor.core.model.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
-import java.util.UUID;
 
 @MappedSuperclass
 @Getter
@@ -17,11 +16,6 @@ public class BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
-
-    @JsonIgnore
-    private Timestamp createdOn;
-    @JsonIgnore
-    private Timestamp updatedOn;
 
 
 }

@@ -1,18 +1,12 @@
 package com.conductor.core.model.user;
 
-import com.conductor.core.model.BaseEntity;
-import com.conductor.core.model.Organization;
-import com.conductor.core.model.ticket.Ticket;
+import com.conductor.core.model.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashSet;
-import java.util.Set;
-
-/**/
 @Entity
 @Table(name = "users")
 @Data

@@ -1,6 +1,6 @@
 package com.conductor.core.repository;
 
-import com.conductor.core.model.Organization;
+import com.conductor.core.model.org.Organization;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;

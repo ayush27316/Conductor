@@ -1,13 +1,11 @@
 package com.conductor.core.service;
 
 import com.conductor.core.dto.OrganizationDTO;
-import com.conductor.core.mapper.OrganizationMapper;
-import com.conductor.core.model.Event;
-import com.conductor.core.model.Operator;
-import com.conductor.core.model.Organization;
-import com.conductor.core.model.audit.OrganizationAudit;
+import com.conductor.core.util.OrganizationMapper;
+import com.conductor.core.model.event.Event;
+import com.conductor.core.model.org.Organization;
+import com.conductor.core.model.org.OrganizationAudit;
 import com.conductor.core.model.ticket.TicketReservation;
-import com.conductor.core.model.user.Role;
 import com.conductor.core.model.user.User;
 import com.conductor.core.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -17,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,7 +60,9 @@ public class OrganizationService {
                 .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
         try{
-            User demoUser = userRepository.findByUsername("demo-user");
+            User demoUser = userRepository.findByUsername("demo-user") .orElseThrow(() ->
+                    new UsernameNotFoundException("User not found with")
+            );
             String json = mapper.writeValueAsString(dto);
             TicketReservation reservation = TicketReservation.builder()
                     .event(event)

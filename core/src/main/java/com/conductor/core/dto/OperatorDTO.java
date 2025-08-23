@@ -1,11 +1,5 @@
 package com.conductor.core.dto;
 
-import com.conductor.core.model.Organization;
-import com.conductor.core.model.user.User;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

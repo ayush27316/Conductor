@@ -1,16 +1,16 @@
-package com.conductor.core.model;
+package com.conductor.core.model.org;
 
-import com.conductor.core.model.audit.OrganizationAudit;
+import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.event.Event;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "organizations")
@@ -53,12 +53,6 @@ public class Organization extends BaseEntity {
     @OneToMany(mappedBy = "organization",
                orphanRemoval = true,
                fetch = FetchType.LAZY)
-    private Set<Event> events;
-
-    @OneToOne(mappedBy = "organization",
-              orphanRemoval = true,
-            cascade = CascadeType.ALL,
-              fetch = FetchType.LAZY)
-    private OrganizationAudit audit;
+    private Set<Event> events = new HashSet<>();
 
 }

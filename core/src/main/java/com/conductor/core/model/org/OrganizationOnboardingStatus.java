@@ -1,6 +1,4 @@
-package com.conductor.core.model;
-
-import jakarta.persistence.*;
+package com.conductor.core.model.org;
 
 //@Entity
 //@Table(name = "organization_onboarding_status")

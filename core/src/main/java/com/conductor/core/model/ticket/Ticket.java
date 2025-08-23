@@ -1,9 +1,8 @@
 package com.conductor.core.model.ticket;
 
-import com.conductor.core.model.BaseEntity;
-import com.conductor.core.model.Event;
+import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.event.Event;
 import com.conductor.core.model.listerners.DefaultEntityListener;
-import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
