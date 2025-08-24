@@ -7,12 +7,7 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface EventMapper {
-
-    @Mapping(target = "externalId", ignore = true)
-    @Mapping(target = "organization", ignore = true)
-    @Mapping(target = "audit", ignore = true)
-    @Mapping(target = "operators", ignore = true)
-    @Mapping(target = "tickets", ignore = true)
+    //@Mapping(target = "organization", ignore = true)
     Event toEntity(EventDTO dto);
 
     EventDTO toDto(Event entity);

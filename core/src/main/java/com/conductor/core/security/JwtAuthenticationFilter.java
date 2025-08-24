@@ -23,31 +23,55 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-
     private final HandlerExceptionResolver handlerExceptionResolver;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        try {
-            log.info("incoming request: {}", request.getRequestURI());
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getServletPath();
 
-            final String requestTokenHeader = request.getHeader("Authorization");
-            if (requestTokenHeader == null || !requestTokenHeader.startsWith("Bearer")) {
+        try {
+            if (path.startsWith("/auth/") || path.startsWith("/public/") || path.startsWith("/h2-console/")) {
+                // skip JWT auth for public endpoints
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            String token = requestTokenHeader.split("Bearer ")[1];
-            String username = jwtUtil.getUsernameFromToken(token);
+            log.debug("Processing JWT authentication for request: {}", request.getRequestURI());
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                User user = userRepository.findByUsername(username).orElseThrow();
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken
-                        = new UsernamePasswordAuthenticationToken(UserPrincipal.create(user), null, null);
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+            final String requestTokenHeader = request.getHeader("Authorization");
+            if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+                String token = requestTokenHeader.substring(7);
+                
+                try {
+                    String username = jwtUtil.getUsernameFromToken(token);
+                    
+                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                        User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+                        
+                        UserPrincipal userPrincipal = UserPrincipal.create(user);
+                        UsernamePasswordAuthenticationToken auth =
+                                new UsernamePasswordAuthenticationToken(
+                                    userPrincipal, 
+                                    null, 
+                                    userPrincipal.getAuthorities()
+                                );
+                        
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                        log.debug("JWT authentication successful for user: {}", username);
+                    }
+                } catch (Exception e) {
+                    log.warn("JWT token validation failed: {}", e.getMessage());
+                    // Continue without authentication - let Spring Security handle it
+                }
             }
+
             filterChain.doFilter(request, response);
+
         } catch (Exception ex) {
+            log.error("Error in JWT filter: {}", ex.getMessage(), ex);
             handlerExceptionResolver.resolveException(request, response, null, ex);
         }
     }

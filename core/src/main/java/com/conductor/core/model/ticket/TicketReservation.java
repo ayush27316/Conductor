@@ -1,7 +1,7 @@
 package com.conductor.core.model.ticket;
 
 
-import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.permission.BaseEntity;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.user.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;

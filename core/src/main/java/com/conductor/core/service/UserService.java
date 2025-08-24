@@ -1,7 +1,6 @@
 package com.conductor.core.service;
 
 import com.conductor.core.model.user.User;
-import com.conductor.core.repository.OperatorRepository;
 import com.conductor.core.repository.UserRepository;
 import com.conductor.core.security.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ public class UserService implements UserDetailsService {
             throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found with")
+                        new UsernameNotFoundException("User not found with username:" + username)
                 );
         return UserPrincipal.create(user);
     }

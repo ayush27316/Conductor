@@ -1,6 +1,6 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.permission.BaseEntity;
 import com.conductor.core.model.org.Organization;
 import com.conductor.core.model.ticket.TicketCreationStrategy;
 import jakarta.persistence.*;

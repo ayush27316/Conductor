@@ -1,6 +1,6 @@
 package com.conductor.core.model.org;
 
-import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.permission.BaseEntity;
 import com.conductor.core.model.event.Event;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -29,7 +29,7 @@ public class Organization extends BaseEntity {
 
     /*This id is used to identify this resource globally.*/
     @Column(name = "external_id")
-    private int externalId;
+    private String externalId;
 
     @NotBlank(message = "Organization name is required")
     @Size(max = 500, message = "Description must be less than 500 characters")

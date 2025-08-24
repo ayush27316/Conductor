@@ -1,7 +1,7 @@
 package com.conductor.core.dto.permission;
 
-import com.conductor.core.model.common.AccessLevel;
-import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.permission.Resource;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

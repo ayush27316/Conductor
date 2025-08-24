@@ -9,6 +9,8 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     Optional<Organization> findByName(String name);
 
+    Optional<Organization> findByExternalId(String externalId);
+
 //    @Query("SELECT o FROM organizations o JOIN FETCH o.audit WHERE o.name = :name")
 //    Optional<Organization> findWithAuditByName(@Param("name") String name);
 

@@ -1,4 +1,4 @@
-package com.conductor.core.model.common;
+package com.conductor.core.model.permission;
 
 import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
@@ -51,28 +51,13 @@ public class Permission extends BaseEntity {
     @Column(name = "permissions", columnDefinition = "JSON")
     private Map<String, String> permissions;
 
-    /**
-     * Whether this permission is active
-     */
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
-
-    /**
-     * When this permission was granted
-     */
     @Column(name = "granted_at", nullable = false)
     private ZonedDateTime grantedAt;
 
-    /**
-     * Who granted this permission
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "granted_by_user_id")
     private User grantedBy;
 
-    /**
-     * Optional expiration date for the permission
-     */
     @Column(name = "expires_at")
     private ZonedDateTime expiresAt;
 

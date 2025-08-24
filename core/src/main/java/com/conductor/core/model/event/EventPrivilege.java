@@ -1,5 +1,12 @@
 package com.conductor.core.model.event;
 
+import com.conductor.core.model.permission.Resource;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Defines the different privileges that can be granted within an {@link Event}.
  * These privileges control access to event-specific resources and operations.
@@ -28,7 +35,7 @@ public enum EventPrivilege {
     /**
      * Represents audit-related information for this event.
      * <p>{@link EventAudit} can only be read. Therefore, AUDIT resource
-     * can only have READ {@link com.conductor.core.model.common.AccessLevel}
+     * can only have READ {@link com.conductor.core.model.permission.AccessLevel}
      * </p>
      */
     AUDIT("audit"),
@@ -66,4 +73,18 @@ public enum EventPrivilege {
         return this.name;
     }
 
+
+
+    private static final Map<String, EventPrivilege> LOOKUP =
+            Stream.of(values()).collect(Collectors.toMap(EventPrivilege::getName, r -> r));
+
+    /**
+     * Resolves a resource from its string name.
+     *
+     * @param name the resource name
+     * @return an Optional containing the matching Resource, or empty if not found
+     */
+    public static Optional<EventPrivilege> fromName(String name) {
+        return Optional.ofNullable(LOOKUP.get(name));
+    }
 }

@@ -1,7 +1,7 @@
 package com.conductor.core.repository;
 
-import com.conductor.core.model.common.Permission;
-import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.permission.Permission;
+import com.conductor.core.model.permission.Resource;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

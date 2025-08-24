@@ -67,5 +67,4 @@ public class EventAccessDetails {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime accessibleTo;
 
-
 }

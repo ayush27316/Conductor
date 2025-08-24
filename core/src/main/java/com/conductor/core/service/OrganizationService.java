@@ -1,6 +1,7 @@
 package com.conductor.core.service;
 
 import com.conductor.core.dto.OrganizationDTO;
+import com.conductor.core.model.user.UserType;
 import com.conductor.core.util.OrganizationMapper;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.org.Organization;
@@ -39,8 +40,6 @@ public class OrganizationService {
     private OrganizationAuditRepository auditRepository;
     @Autowired
     private TicketReservationRepository ticketReservationRepository;
-    @Autowired
-    private OperatorRepository operatorRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -133,27 +132,19 @@ public class OrganizationService {
             // Create organization
             Organization org = organizationMapper.toEntity(dto);
             OrganizationAudit audit = OrganizationAudit.getBlankAudit(org);
-            org.setAudit(audit);
-            org = organizationRepository.save(org);
 
+            organizationRepository.save(org);
+            auditRepository.save(audit);
             // Create owner user and operator
             User user = User.builder()
-                    .type(User.UserType.OPERATOR)
+                    .type(UserType.OPERATOR)
                     .username((dto.getName()))
                     .password((dto.getName()))
                     .emailAddress(org.getEmail())
                     .build();
 
             userRepository.save(user);
-
-            Operator operator = Operator.builder()
-                    .user(user)
-                    .role(Role.OWNER)
-                    .organization(org)
-                    .build();
-
-            operatorRepository.save(operator);
-
+            // TODO: Grant Owner permissions to this user
             logger.info("Organization onboarding completed successfully for: {}", dto.getName());
 
             // TODO: Implement async call to email service to send credentials

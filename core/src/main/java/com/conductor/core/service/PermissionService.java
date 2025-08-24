@@ -1,15 +1,19 @@
 package com.conductor.core.service;
 
-import com.conductor.core.dto.GrantPermissionRequestDTO;
-import com.conductor.core.dto.PermissionDTO;
-import com.conductor.core.dto.RevokePermissionRequestDTO;
-import com.conductor.core.model.common.AccessLevel;
-import com.conductor.core.model.common.Permission;
-import com.conductor.core.model.common.Resource;
+import com.conductor.core.dto.permission.GrantPermissionRequestDTO;
+import com.conductor.core.dto.permission.GrantPermissionResponseDTO;
+import com.conductor.core.dto.permission.PermissionDTO;
+import com.conductor.core.dto.permission.RevokePermissionRequestDTO;
+import com.conductor.core.model.event.EventPrivilege;
+import com.conductor.core.model.org.OrganizationPrivilege;
+import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.permission.Permission;
+import com.conductor.core.model.permission.Resource;
 import com.conductor.core.model.user.User;
-import com.conductor.core.repository.PermissionRepository;
-import com.conductor.core.repository.UserRepository;
-import com.conductor.core.util.PermissionMapper;
+import com.conductor.core.repository.*;
+import com.conductor.core.util.Pair;
+//import com.conductor.core.util.PermissionMapper;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,191 +31,202 @@ public class PermissionService {
 
     private final PermissionRepository permissionRepository;
     private final UserRepository userRepository;
-    private final PermissionMapper permissionMapper;
-
+    //private final PermissionMapper permissionMapper;
+    private final OrganizationRepository organizationRepository;
+    private final EventRepository eventRepository;
+    private final TicketReservationRepository ticketReservationRepository;
     /**
      * Grant permissions to a user
      */
-    public PermissionDTO grantPermission(GrantPermissionRequestDTO request, User grantedBy) {
-        User user = userRepository.findById(request.getUserId())
+    @Transactional
+    public GrantPermissionResponseDTO grantPermission(GrantPermissionRequestDTO request) {
+        //not added granted by
+        //use secuirty context for that
+        User user = userRepository.findByExternalId(request.getBUserExternalId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Check if permission already exists
-        List<Permission> existingPermissions = permissionRepository
-                .findByUserAndResourceAndResourceIdAndIsActiveTrue(
-                        user, request.getResource().getResourceName(), request.getResourceId());
 
+
+        List<Permission> existingPermissions = permissionRepository
+                .findByUserAndResourceNameAndResourceId(user, request.getResourceName(), request.getResourceId());
+
+        Pair<Boolean, String> result = validate(request.getResourceName(), request.getPermissions());
+        if(!result.getStatus()){
+            return new GrantPermissionResponseDTO(result.getMessage());
+
+        }
         Permission permission;
+
         if (!existingPermissions.isEmpty()) {
-            // Update existing permission by adding new privilege
-            permission = existingPermissions.get(0);
-            Map<String, String> currentPermissions = permission.getPermissions();
-            Map<String, String> updatedPermissions = permissionMapper.addPrivilege(
-                    currentPermissions, request.getPrivilege(), request.getAccessLevel());
-            permission.setPermissions(updatedPermissions);
-        } else {
-            // Create new permission
-            Map<String, String> permissions = permissionMapper.createEventPermissions(
-                    request.getPrivilege(), request.getAccessLevel());
-            
+            if(!isValidResourceExternalId(Resource.fromName(request.getResourceName()).get(),request.getResourceId())){
+                return new GrantPermissionResponseDTO("Resource: "+ request.getResourceName()+ " with" + request.getResourceId()+ " not found");
+            }
             permission = Permission.builder()
                     .user(user)
-                    .resourceName(request.getResource().getResourceName())
-                    .resourceId(request.getResourceId())
-                    .permissions(permissions)
-                    .isActive(true)
-                    .grantedAt(ZonedDateTime.now())
-                    .grantedBy(grantedBy)
+                    .permissions(request.getPermissions())
+                    .resourceName(request.getResourceName())
                     .expiresAt(request.getExpiresAt())
                     .build();
-        }
 
-        Permission savedPermission = permissionRepository.save(permission);
-        return mapToDTO(savedPermission);
-    }
+        } else {
+            // if exisiting permissions is not empty this
+            //by design mean there will only be a single row of permission
+            //for this user on this resoruce
 
-    /**
-     * Revoke a specific privilege from a user
-     */
-    public void revokePermission(RevokePermissionRequestDTO request) {
-        List<Permission> permissions = permissionRepository
-                .findByUserAndResourceAndResourceIdAndIsActiveTrue(
-                        userRepository.findById(request.getUserId()).orElse(null),
-                        request.getResource().getResourceName(), 
-                        request.getResourceId());
 
-        for (Permission permission : permissions) {
+            permission = existingPermissions.get(0);
+
+            //merge the exisitng permissions with new ones
             Map<String, String> currentPermissions = permission.getPermissions();
-            Map<String, String> updatedPermissions = permissionMapper.removePrivilege(
-                    currentPermissions, request.getPrivilege());
-            
-            if (updatedPermissions.isEmpty()) {
-                // If no privileges left, deactivate the permission
-                permission.setIsActive(false);
-            } else {
-                permission.setPermissions(updatedPermissions);
-            }
-            permissionRepository.save(permission);
+            Map<String, String> updatedPermissions = mergePermissions(
+                    currentPermissions, request.getPermissions());
+
+            permission.setPermissions(updatedPermissions);
+
         }
+
+        permissionRepository.save(permission);
+
+        return new GrantPermissionResponseDTO("Permissions granted succesfully");
     }
 
-    /**
-     * Check if user has a specific privilege
-     */
-    public boolean hasPrivilege(User user, Resource resource, String resourceId, 
-                               String privilege, AccessLevel requiredAccessLevel) {
-        List<Permission> permissions = permissionRepository
-                .findByUserAndResourceAndResourceIdAndIsActiveTrue(user, resource.getResourceName(), resourceId);
+    private boolean isValidResourceExternalId(Resource resource, String resourceId) {
 
-        for (Permission permission : permissions) {
-            if (permission.getExpiresAt() != null && permission.getExpiresAt().isBefore(ZonedDateTime.now())) {
-                continue; // Skip expired permissions
-            }
-            
-            if (permissionMapper.hasPrivilege(permission.getPermissions(), privilege, requiredAccessLevel)) {
-                return true;
-            }
+        //verify if resource with the given external id exists
+        switch (resource){
+            case ORGANIZATION :
+                if(!organizationRepository.findByExternalId(resourceId).isEmpty())
+                {return true;}
+            case EVENT:
+                if(!eventRepository.findByExternalId(resourceId).isEmpty())
+                {return true;}
         }
         return false;
     }
 
     /**
-     * Get all permissions for a user
+     * Validates if the given resourceName and permissions are valid.
+     *
+     * @param resourceName the name of the resource (e.g. "organization", "event")
+     * @param permissions  a map of privilege -> accessLevel
+     * @return true if valid, false otherwise
      */
-    public List<PermissionDTO> getUserPermissions(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        List<Permission> permissions = permissionRepository.findByUserAndIsActiveTrue(user);
-        return permissions.stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
+    /*since permissions, privileges, and accesslevel are issued by the system and encoded in jwt
+    * whenever the  jwt is verified permissions are boound to be valid */
+    private  Pair<Boolean, String> validate(String resourceName, Map<String, String> permissions) {
+        Optional<Resource> resourceOpt = Resource.fromName(resourceName);
+        //we should probably throw error like ResourceNotFoundError
+        if (resourceOpt.isEmpty()) {
+            return Pair.of(false, resourceName +" does not exist"); // invalid resource
+        }
 
-    /**
-     * Get all permissions for a specific resource
-     */
-    public List<PermissionDTO> getResourcePermissions(Resource resource, String resourceId) {
-        List<Permission> permissions = permissionRepository
-                .findByResourceAndResourceIdAndIsActiveTrue(resource.getResourceName(), resourceId);
-        
-        return permissions.stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
+        Resource resource = resourceOpt.get();
 
-    /**
-     * Get all users with a specific privilege on a resource
-     */
-    public List<User> getUsersWithPrivilege(Resource resource, String resourceId, String privilege) {
-        return permissionRepository.findUsersWithPrivilege(resource.getResourceName(), resourceId, privilege);
-    }
+        for (Map.Entry<String, String> entry : permissions.entrySet()) {
+            String privilegeName = entry.getKey();
+            String accessName = entry.getValue();
 
-    /**
-     * Bulk grant permissions to multiple users
-     */
-    public List<PermissionDTO> bulkGrantPermissions(List<GrantPermissionRequestDTO> requests, User grantedBy) {
-        List<PermissionDTO> results = new ArrayList<>();
-        
-        for (GrantPermissionRequestDTO request : requests) {
-            try {
-                PermissionDTO permission = grantPermission(request, grantedBy);
-                results.add(permission);
-            } catch (Exception e) {
-                log.error("Failed to grant permission for user {}: {}", request.getUserId(), e.getMessage());
+            // validate privilege depending on resource
+            boolean validPrivilege = switch (resource) {
+                case ORGANIZATION -> OrganizationPrivilege.fromName(privilegeName).isPresent();
+                case EVENT -> EventPrivilege.fromName(privilegeName).isPresent();
+                case USER, TICKET -> true;
+            };
+
+            if (!validPrivilege) {
+                return Pair.of(false, privilegeName + "does not exist");
+            }
+
+            // validate access level
+            Optional<AccessLevel> accessOpt = AccessLevel.fromName(accessName);
+            if (accessOpt.isEmpty()) {
+                return Pair.of(false, accessName + "is not valid");
+            }
+
+            // Example: if AUDIT privilege → only READ allowed
+            if (privilegeName.equalsIgnoreCase("audit") && accessOpt.get() != AccessLevel.READ) {
+                return Pair.of(false, " Privilege 'audit' can only have read access");
             }
         }
-        
-        return results;
+
+        return Pair.of(true, "");
     }
 
-    /**
-     * Deactivate expired permissions
-     */
-    public void deactivateExpiredPermissions() {
-        List<Permission> expiredPermissions = permissionRepository
-                .findExpiredPermissions(ZonedDateTime.now());
-        
-        for (Permission permission : expiredPermissions) {
-            permission.setIsActive(false);
-            permissionRepository.save(permission);
+    @Transactional
+    public List<PermissionDTO> getUserPermissions(String userExternalId){
+        User user = userRepository.findByExternalId(userExternalId).get();
+        List<Permission> permissions = permissionRepository.findByUser(user);
+        List<PermissionDTO> permissionDTOS = new ArrayList<>();
+        for(Permission p : permissions){
+            permissionDTOS.add(PermissionDTO.builder()
+                    .permissions(p.getPermissions())
+                    .userExternalId(p.getUser().getExternalId())
+                    .resourceId(p.getResourceId())
+                    .resourceName(p.getResourceName())
+                    .build());
         }
-        
-        log.info("Deactivated {} expired permissions", expiredPermissions.size());
+        return permissionDTOS;
+
+    }
+
+
+    /**
+     * Revoke a specific permission from a user
+     */
+    public void revokePermission(RevokePermissionRequestDTO request) {
+        Pair<Boolean, String> result = validate(request.getResourceName(), request.getPermissions());
+        if(!result.getStatus()){
+           return;
+        }
+
+        if(!isValidResourceExternalId(Resource.fromName(request.getResourceName()).get(),request.getResourceId())){
+            return;
+        }
+
+        List<Permission> permissions = permissionRepository
+                .findByUserAndResourceNameAndResourceId(
+                        userRepository.findByExternalId(request.getTargetUserExternalId()).orElse(null),
+                        request.getResourceName(),
+                        request.getResourceId());
+
+        Permission permission = permissions.get(0);
+        Map<String, String> currentPermissions = permission.getPermissions();
+        Map<String, String> updatedPermissions = diffPermissions(currentPermissions, request.getPermissions());
+
+        permission.setPermissions(updatedPermissions);
+        permissionRepository.save(permission);
     }
 
     /**
-     * Get permissions expiring soon
+     * Merge multiple permission maps
      */
-    public List<PermissionDTO> getPermissionsExpiringSoon(int daysAhead) {
-        ZonedDateTime start = ZonedDateTime.now();
-        ZonedDateTime end = start.plusDays(daysAhead);
-        
-        List<Permission> expiringPermissions = permissionRepository
-                .findPermissionsExpiringBetween(start, end);
-        
-        return expiringPermissions.stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    public Map<String, String> mergePermissions(Map<String, String>... permissionMaps) {
+        Map<String, String> merged = new HashMap<>();
+        for (Map<String, String> permissions : permissionMaps) {
+            if (permissions != null) {
+                merged.putAll(permissions);
+            }
+        }
+        return merged;
+    }
+    /**
+     * Returns a new map that is the difference of mapA and mapB.
+     * i.e. all entries from mapA except those whose keys exist in mapB.
+     */
+    public Map<String, String> diffPermissions(Map<String, String> mapA, Map<String, String> mapB) {
+        if (mapA == null) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, String> result = new HashMap<>(mapA);
+        if (mapB != null) {
+            for (String key : mapB.keySet()) {
+                result.remove(key);
+            }
+        }
+        return result;
     }
 
-    /**
-     * Map Permission entity to DTO
-     */
-    private PermissionDTO mapToDTO(Permission permission) {
-        return PermissionDTO.builder()
-                .id(permission.getId())
-                .userId(permission.getUser().getId())
-                .username(permission.getUser().getUsername())
-                .resource(permission.getResourceName())
-                .resourceId(permission.getResourceId())
-                .privilege(null) // Not applicable with Map approach
-                .accessLevel(null) // Not applicable with Map approach
-                .isActive(permission.getIsActive())
-                .grantedAt(permission.getGrantedAt())
-                .grantedByUserId(permission.getGrantedBy() != null ? permission.getGrantedBy().getId() : null)
-                .grantedByUsername(permission.getGrantedBy() != null ? permission.getGrantedBy().getUsername() : null)
-                .expiresAt(permission.getExpiresAt())
-                .build();
-    }
+
+
 }

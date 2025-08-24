@@ -1,6 +1,6 @@
 package com.conductor.core.service;
 
-import com.conductor.core.model.common.*;
+import com.conductor.core.model.permission.*;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.event.EventPrivilege;
 import com.conductor.core.model.org.Organization;

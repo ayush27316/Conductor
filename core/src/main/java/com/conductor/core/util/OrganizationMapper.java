@@ -7,13 +7,8 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface OrganizationMapper {
+    //@Mapping(target = "events", ignore = true)
+    Organization toEntity(OrganizationDTO dto);
 
-//   OrganizationMapper INSTANCE = Mappers.getMapper(OrganizationMapper.class);
-
-   @Mapping(target = "externalId", ignore = true) // Will be auto-generated
-   @Mapping(target = "events", ignore = true) // Not part of DTO
-   @Mapping(target = "audit", ignore = true) // Will be set separately
-   Organization toEntity(OrganizationDTO dto);
-
-   OrganizationDTO toDto(Organization entity);
+    OrganizationDTO toDto(Organization entity);
 }

@@ -1,5 +1,12 @@
 package com.conductor.core.model.org;
 
+import com.conductor.core.model.event.EventPrivilege;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * Defines the different privileges that an {@link Organization}
  * can grant to its operators. These privileges control access to
@@ -61,6 +68,19 @@ public enum OrganizationPrivilege {
 
     public String getName(){
         return this.name;
+    }
+
+    private static final Map<String, OrganizationPrivilege> LOOKUP =
+            Stream.of(values()).collect(Collectors.toMap(OrganizationPrivilege::getName, r -> r));
+
+    /**
+     * Resolves a resource from its string name.
+     *
+     * @param name the resource name
+     * @return an Optional containing the matching Resource, or empty if not found
+     */
+    public static Optional<OrganizationPrivilege> fromName(String name) {
+        return Optional.ofNullable(LOOKUP.get(name));
     }
 
 }

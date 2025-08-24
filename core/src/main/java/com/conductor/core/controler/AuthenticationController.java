@@ -22,7 +22,7 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDto) {
-        return ResponseEntity.ok(authService.login(loginRequestDto));
+        return ResponseEntity.ok().body(authService.login(loginRequestDto));
     }
 
     @PostMapping("/signup")

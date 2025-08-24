@@ -1,6 +1,6 @@
 package com.conductor.core.dto.permission;
 
-import com.conductor.core.model.common.AccessLevel;
+import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.org.OrganizationPrivilege;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

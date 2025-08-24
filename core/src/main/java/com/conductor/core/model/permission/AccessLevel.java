@@ -1,4 +1,6 @@
-package com.conductor.core.model.common;
+package com.conductor.core.model.permission;
+
+import java.util.Optional;
 
 /**
  * Defines the types of actions that can be granted
@@ -23,6 +25,16 @@ public enum AccessLevel {
 
     public String getName(){
         return this.name;
+    }
+
+    public static Optional<AccessLevel> fromName(String name){
+        AccessLevel level = null;
+        if(name == "read"){
+            level = AccessLevel.READ;
+        } else if (name == "write") {
+            level = AccessLevel.WRITE;
+        }
+        return Optional.ofNullable(level);
     }
 
 }

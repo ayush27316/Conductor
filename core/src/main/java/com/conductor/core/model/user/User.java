@@ -1,7 +1,7 @@
 package com.conductor.core.model.user;
 
-import com.conductor.core.model.common.BaseEntity;
-import com.conductor.core.model.common.Permission;
+import com.conductor.core.model.permission.BaseEntity;
+import com.conductor.core.model.permission.Permission;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Represents a system user that can authenticate and interact with the platform.
@@ -35,6 +36,10 @@ public class User extends BaseEntity {
     @NotNull(message = "User type must be specified")
     @Enumerated(EnumType.STRING)
     private UserType type;
+
+    @Column(name="external_id", unique = true, nullable = false)
+    private String externalId;
+
 
     @NotBlank(message = "Username cannot be blank")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
@@ -64,4 +69,11 @@ public class User extends BaseEntity {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Permission> permissions;
+
+    @PrePersist
+    public void ensureExternalId() {
+        if (externalId == null) {
+            externalId = UUID.randomUUID().toString();
+        }
+    }
 }

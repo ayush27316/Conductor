@@ -1,12 +1,14 @@
 package com.conductor.core.model.user;
 
+import jakarta.validation.constraints.NotNull;
+
 /**
  * Represents the different categories of users that can interact with conductor.
  */
 public enum UserType {
 
     /**
-     * System administrator with 'ALL' {@link com.conductor.core.model.common.AccessLevel}
+     * System administrator with 'ALL' {@link com.conductor.core.model.permission.AccessLevel}
      * to all the resource.
      */
     ADMIN,
@@ -30,5 +32,6 @@ public enum UserType {
      * accessible i.e. resources whose url begins with "/public".
      * </p>
      */
-    PUBLIC
+    PUBLIC;
+
 }

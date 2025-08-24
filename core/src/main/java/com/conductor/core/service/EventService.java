@@ -7,7 +7,6 @@ import com.conductor.core.model.org.Organization;
 
 import com.conductor.core.repository.EventRepository;
 
-import com.conductor.core.repository.OperatorRepository;
 import com.conductor.core.repository.OrganizationRepository;
 import com.conductor.core.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,7 +25,6 @@ public class EventService {
     private final EventRepository eventRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
-    private final OperatorRepository operatorRepository;
 
     @Autowired
     private EventMapper eventMapper;

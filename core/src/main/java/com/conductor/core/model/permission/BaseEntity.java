@@ -1,4 +1,4 @@
-package com.conductor.core.model.common;
+package com.conductor.core.model.permission;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

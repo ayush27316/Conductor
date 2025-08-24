@@ -1,12 +1,15 @@
 package com.conductor.core.dto;
 
 import com.conductor.core.model.event.Event;
+import com.conductor.core.model.event.EventFormat;
+import com.conductor.core.model.event.EventStatus;
 import com.conductor.core.model.ticket.TicketCreationStrategy;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 @Data
@@ -14,21 +17,22 @@ import java.time.ZonedDateTime;
 @AllArgsConstructor
 @Builder
 public class EventDTO {
-    private Event.Status status;
-    private Event.Format format;
-    //private Event.AccessStrategy accessStrategy;
-    private TicketCreationStrategy ticketCreationStrategy;
+    private String externalId;
+    private String status;
+    private String format;
+    private String accessStrategy;
+    private String ticketCreationStrategy;
+    private LocalDateTime accessibleFrom;
+    private LocalDateTime accessibleTo;
     private String shortName;
     private String displayName;
     private String websiteUrl;
     private String externalUrl;
-    private String termsAndConditionsUrl;
-    private String privacyPolicyUrl;
-    private String imageUrl;
-    private String fileBlobId;
     private String location;
     private String latitude;
     private String longitude;
     private ZonedDateTime begin;
     private ZonedDateTime end;
+    private String organizationExternalId;
+
 }

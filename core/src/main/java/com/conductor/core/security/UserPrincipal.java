@@ -20,25 +20,34 @@ public class UserPrincipal implements UserDetails {
     private String username;
     private String email;
     private String password;
-
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserPrincipal create(User user) {
-
         List<GrantedAuthority> authorities = new ArrayList<>();
 
-        switch (user.getType()){
-            case PUBLIC:
-                authorities.add(new SimpleGrantedAuthority("USER"));
-                break;
-            case OPERATOR:
-                //based on roles assigned to this operator grant authorities
-                break;
-            case ADMIN:
-                authorities.add(new SimpleGrantedAuthority("ADMIN"));
-                break;
-            case API_KEY:
-                break;
+        if (user.getType() != null) {
+            switch (user.getType()) {
+                case PUBLIC:
+                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                    break;
+                case OPERATOR:
+                    authorities.add(new SimpleGrantedAuthority("ROLE_OPERATOR"));
+                    // TODO: Add operator-specific authorities based on roles
+                    break;
+                case ADMIN:
+                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                    break;
+                case API_KEY:
+                    authorities.add(new SimpleGrantedAuthority("ROLE_API"));
+                    break;
+                default:
+                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                    break;
+            }
+        } else {
+            // Default authority if user type is not set
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
 
         return UserPrincipal.builder()
@@ -50,6 +59,9 @@ public class UserPrincipal implements UserDetails {
                 .build();
     }
 
+    public Long getId() {
+        return id;
+    }
 
     @Override
     public String getUsername() {
