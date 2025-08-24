@@ -27,6 +27,7 @@ public class Organization extends BaseEntity {
     @EqualsAndHashCode.Include
     private String name;
 
+    /*This id is used to identify this resource globally.*/
     @Column(name = "external_id")
     private int externalId;
 
@@ -41,8 +42,11 @@ public class Organization extends BaseEntity {
     @Column(name = "email", unique = true, length = 255)
     private String email;
 
-    /*organizations can put different tags to showcase it users */
+    /*
+    * organizations can put different tags to showcase it to users
+    * */
     private List<String> tags;
+
 
     @Column(name = "website_url")
     private String websiteUrl;

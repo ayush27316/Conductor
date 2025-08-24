@@ -33,21 +33,31 @@ public class EventAccessDetails {
      * </ul>
      */
     public enum AccessStrategy {
-        ONCE,
-        LIMITED,
-        UNLIMITED,
+        ONCE("once"),
+        LIMITED("limited"),
+        UNLIMITED("unlimited"),
 
         /*No Implementation provided. The idea is that these Strategies
          * can be composed together under certain restrictions. */
-        BLOCKED,
-        TEMPORAL,
-        FIRST_COME_FIRST_SERVED,
+        BLOCKED("blocked"),
+        TEMPORAL("temporal"),
+        FIRST_COME_FIRST_SERVED("first_come_first_served");
+
+
+        private String name;
+        AccessStrategy(String name)
+        {
+            this.name = name;
+        };
+
+        public String getName(){
+            return this.name;
+        }
     }
 
 
     @Column(name = "access_strategy", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AccessStrategy accessStrategy;
+    private String accessStrategy;
 
     @Column(name = "accessible_from", nullable = true)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

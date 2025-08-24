@@ -1,11 +1,17 @@
+/*
+*   ____                _            _
+*  / ___|___  _ __   __| | ___ _   _| |_ ___  _ __
+* | |   / _ \| '_ \ / _` |/ __| | | | __/ _ \| '__|
+* | |__| (_) | | | | (_| | (__| |_| | || (_) | |
+*  \____\___/|_| |_|\__,_|\___|\__,_|\__\___/|_|
+*
+* @Author: Ayush Srivastava
+* @Version 1.0.0
+* */
 package com.conductor.core;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 
 @SpringBootApplication(scanBasePackages = {
         "com.conductor.core",

@@ -12,20 +12,31 @@ public enum EventStatus {
     /**
      * The event has been created but not yet started/live.
      */
-    DRAFT,
+    DRAFT("draft"),
 
     /**
      * The event is currently live and accessible to participants.
      */
-    LIVE,
+    LIVE("draft"),
 
     /**
      * The event has ended and is no longer active.
      */
-    EXPIRED,
+    EXPIRED("expired"),
 
     /**
      * The event has been cancelled before completion.
      */
-    CANCELLED
+    CANCELLED("cancelled");
+
+
+    private String name;
+    EventStatus(String name)
+    {
+        this.name = name;
+    };
+
+    public String getName(){
+        return this.name;
+    }
 }

@@ -2,7 +2,6 @@ package com.conductor.core.model.ticket;
 
 import com.conductor.core.model.common.BaseEntity;
 import com.conductor.core.model.event.Event;
-import com.conductor.core.model.listerners.DefaultEntityListener;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +17,6 @@ import java.util.List;
  * with a ticket can access events associated with it.
  */
 @Entity
-@EntityListeners({DefaultEntityListener.class})
 @Builder
 @Data
 @NoArgsConstructor
@@ -41,8 +39,9 @@ public class Ticket extends BaseEntity {
     /**
      * This list only give specifics about events associated with this ticket
      * but whether events give access to this ticket depends on the event.
+     * We should incorporate a key and token validation here instead of
+     * relaying on associations with events.
      */
-
     @ManyToMany
     private List<Event> accessibleEvents;
 

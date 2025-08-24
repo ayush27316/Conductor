@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "organization_audit")
+@Table(name = "organization_audits")
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,7 +20,6 @@ public class OrganizationAudit extends BaseEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id_fk", nullable = false, unique = true)
-    @JsonIgnore
     private Organization organization;
 
     public static OrganizationAudit getBlankAudit(Organization organization){

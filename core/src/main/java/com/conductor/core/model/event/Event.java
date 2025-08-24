@@ -27,11 +27,8 @@ public class Event extends BaseEntity {
     @Column(name="external_id", unique = true, nullable = false)
     private String externalId;
 
-    @Enumerated(EnumType.STRING)
-    private EventStatus status;
-
-    @Enumerated(EnumType.STRING)
-    private EventFormat format;
+    private String status;
+    private String format;
 
     @Column(name="short_name")
     private String shortName;
@@ -70,7 +67,6 @@ public class Event extends BaseEntity {
     * @ManyToMany
     * private List<Ticket> tickets;
     **/
-
     @PrePersist
     public void ensureExternalId() {
         if (externalId == null) {
