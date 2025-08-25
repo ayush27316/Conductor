@@ -1,4 +1,4 @@
-package com.conductor.core.controler;
+package com.conductor.core.controller;
 
 import com.conductor.core.dto.OrganizationDTO;
 import com.conductor.core.model.ticket.TicketReservation;
@@ -8,10 +8,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
+
 import jakarta.persistence.EntityNotFoundException;
 
 @RestController
@@ -28,6 +31,7 @@ public class OrganizationController {
      * Register a new organization for approval
      * This creates a pending ticket reservation for organization onboarding
      */
+    @PreAuthorize("hasPermission('public',null)")
     @PostMapping("/register")
     public ResponseEntity<String> registerOrganization(@Valid @RequestBody OrganizationDTO organizationDTO) {
         try {
@@ -45,6 +49,7 @@ public class OrganizationController {
      * Approve a pending organization registration
      * This endpoint is typically used by conductor organization operators
      */
+
     @PostMapping("/approve/{reservation-id}")
     public ResponseEntity<String> approveOrganization(@PathVariable(value = "reservation-id", required = true) String reservationExternalId) {
         logger.info("Attempting to approve organization with reservation ID: {}", reservationExternalId);
@@ -77,13 +82,15 @@ public class OrganizationController {
         }
     }
 
+
     /**
      * Get all organizations waiting for approval
      * This endpoint is typically used by conductor organization operators
      */
+  //  @PreAuthorize("hasPermission('OPERATOR', @permissionService.createRequiredPermissions('ORGANIZATION', #organizationExternalId, {'event':'write' }))")
     @GetMapping("/waiting-for-approval")
     public ResponseEntity<?> getPendingOrganizations() {
-        logger.info("Fetching pending organization approvals");
+       logger.info("Fetching pending organization approvals");
         try {
             List<TicketReservation> pendingReservations = organizationService.getAllOrganizationsWaitingForApproval();
             logger.info("Found {} pending organization approvals", pendingReservations.size());
@@ -93,6 +100,34 @@ public class OrganizationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to fetch pending organizations: " + e.getMessage());
         }
+    }
+
+    @PreAuthorize("hasPermission('ADMIN', null)")
+    @GetMapping("/admin-only")
+    public String adminOnly() {
+        return "Admin access granted";
+
+    }
+
+    // Example 2: Check specific permission without user type restriction
+    @PreAuthorize("hasPermission(null, @permissionService.createRequiredPermissions('USER_MANAGEMENT', null, {'READ': 'READ'}))")
+    @GetMapping("/users")
+    public String getUsers() {
+        return "Users list";
+    }
+
+    // Example 3: Check both user type and specific permissions
+    @PreAuthorize("hasPermission('MANAGER', @permissionService.createRequiredPermissions('PROJECT_MANAGEMENT', #projectId, {'WRITE': 'WRITE'}))")
+    @PostMapping("/projects/{projectId}/update")
+    public String updateProject(@PathVariable String projectId) {
+        return "Project updated";
+    }
+
+    // Example 4: Using the second overload with resource ID
+    @PreAuthorize("hasPermission(#resourceId, 'ADMIN', @permissionService.createRequiredPermissions('RESOURCE_MANAGEMENT', #resourceId, {'DELETE': 'DELETE'}))")
+    @DeleteMapping("/resources/{resourceId}")
+    public String deleteResource(@PathVariable String resourceId) {
+        return "Resource deleted";
     }
 
 }

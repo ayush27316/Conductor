@@ -34,8 +34,7 @@ import java.util.UUID;
 public class User extends BaseEntity {
 
     @NotNull(message = "User type must be specified")
-    @Enumerated(EnumType.STRING)
-    private UserType type;
+    private String type;
 
     @Column(name="external_id", unique = true, nullable = false)
     private String externalId;
@@ -67,7 +66,7 @@ public class User extends BaseEntity {
     @Column(name = "email_address", nullable = false, unique = true, length = 150)
     private String emailAddress;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
     private List<Permission> permissions;
 
     @PrePersist

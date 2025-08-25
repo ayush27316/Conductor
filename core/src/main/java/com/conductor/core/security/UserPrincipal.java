@@ -1,5 +1,9 @@
 package com.conductor.core.security;
 
+import com.conductor.core.dto.permission.PermissionDTO;
+import com.conductor.core.model.permission.Permission;
+import com.conductor.core.model.user.UserType;
+import com.conductor.core.util.PermissionMapper;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,51 +20,40 @@ import java.util.Objects;
 @Builder
 public class UserPrincipal implements UserDetails {
     private Long id;
+    private String externalId;
     private String name;
     private String username;
     private String email;
     private String password;
-    private Collection<? extends GrantedAuthority> authorities;
+    private String userType;
+    private List<PermissionDTO> permissions;
 
     public static UserPrincipal create(User user) {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-
-        if (user.getType() != null) {
-            switch (user.getType()) {
-                case PUBLIC:
-                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-                    break;
-                case OPERATOR:
-                    authorities.add(new SimpleGrantedAuthority("ROLE_OPERATOR"));
-                    // TODO: Add operator-specific authorities based on roles
-                    break;
-                case ADMIN:
-                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-                    break;
-                case API_KEY:
-                    authorities.add(new SimpleGrantedAuthority("ROLE_API"));
-                    break;
-                default:
-                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-                    break;
-            }
-        } else {
-            // Default authority if user type is not set
-            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        }
-
         return UserPrincipal.builder()
                 .id(user.getId())
+                .externalId(user.getExternalId())
                 .username(user.getUsername())
                 .password(user.getPassword())
                 .email(user.getEmailAddress())
-                .authorities(authorities)
+                .userType(user.getType())
+                .permissions(PermissionMapper.toPermissionDTOs(user.getPermissions()))
                 .build();
     }
 
     public Long getId() {
         return id;
+    }
+
+    public String getExternalId(){
+        return externalId;
+    }
+
+    public String getUserType() {
+        return this.userType;
+    }
+
+    public List<PermissionDTO> getPermissions() {
+        return this.permissions;
     }
 
     @Override
@@ -75,7 +68,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+        return null;
     }
 
     @Override
@@ -110,4 +103,6 @@ public class UserPrincipal implements UserDetails {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+
 }

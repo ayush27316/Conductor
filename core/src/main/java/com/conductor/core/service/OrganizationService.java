@@ -1,7 +1,12 @@
 package com.conductor.core.service;
 
 import com.conductor.core.dto.OrganizationDTO;
+import com.conductor.core.model.org.OrganizationPrivilege;
+import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.permission.Permission;
+import com.conductor.core.model.permission.Resource;
 import com.conductor.core.model.user.UserType;
+import com.conductor.core.security.UserPrincipal;
 import com.conductor.core.util.OrganizationMapper;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.org.Organization;
@@ -16,11 +21,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -53,23 +62,21 @@ public class OrganizationService {
     * */
     @Transactional
     public void registerOrganization(OrganizationDTO dto){
-        Organization organization = organizationRepository.findByName("conductor")
-                .orElseThrow(() -> new EntityNotFoundException("Organization not found"));
-        Event event = eventRepository.findByOrganizationIdAndShortName(organization.getId(), "organization_onboarding")
+
+        Event event = eventRepository.findByShortName("organization_onboarding")
                 .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
-        try{
-            User demoUser = userRepository.findByUsername("demo-user") .orElseThrow(() ->
-                    new UsernameNotFoundException("User not found with")
-            );
-            String json = mapper.writeValueAsString(dto);
-            TicketReservation reservation = TicketReservation.builder()
-                    .event(event)
-                    .status(TicketReservation.Status.PENDING)
-                    .user(demoUser)//replace User from context
-                    .metadata(json).build();
-            ticketReservationRepository.save(reservation);
-        }catch (Exception e){};
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserPrincipal principal = (UserPrincipal)authentication.getPrincipal();
+
+        //String json = mapper.writeValueAsString(dto);
+        TicketReservation reservation = TicketReservation.builder()
+                .event(event)
+                .status(TicketReservation.Status.PENDING)
+                .user(null)
+                .metadata(null).build();
+
+        ticketReservationRepository.save(reservation);
     }
 
     /**
@@ -133,11 +140,22 @@ public class OrganizationService {
             Organization org = organizationMapper.toEntity(dto);
             OrganizationAudit audit = OrganizationAudit.getBlankAudit(org);
 
+            Map<String, String> permissions = new HashMap<>();
+
+            permissions.put(OrganizationPrivilege.EVENT.getName(), AccessLevel.WRITE.getName());
+            permissions.put(OrganizationPrivilege.OPERATOR.getName(), AccessLevel.WRITE.getName());
+            permissions.put(OrganizationPrivilege.CONFIG.getName(), AccessLevel.WRITE.getName());
+            permissions.put(OrganizationPrivilege.AUDIT.getName(), AccessLevel.READ.getName());
+
+            Permission permission = Permission.builder()
+                    .resourceName(Resource.ORGANIZATION.getName())
+                    .resourceId(org.getExternalId())
+                    .permissions(permissions).build();
             organizationRepository.save(org);
             auditRepository.save(audit);
             // Create owner user and operator
             User user = User.builder()
-                    .type(UserType.OPERATOR)
+                    .type(UserType.OPERATOR.getName())
                     .username((dto.getName()))
                     .password((dto.getName()))
                     .emailAddress(org.getEmail())

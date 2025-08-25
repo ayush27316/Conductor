@@ -1,4 +1,4 @@
-package com.conductor.core.controler;
+package com.conductor.core.controller;
 
 import com.conductor.core.dto.EventDTO;
 import com.conductor.core.service.EventService;

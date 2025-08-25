@@ -54,8 +54,8 @@ public class Permission extends BaseEntity {
     @Column(name = "granted_at", nullable = false)
     private ZonedDateTime grantedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "granted_by_user_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "granted_by_user_id_fk")
     private User grantedBy;
 
     @Column(name = "expires_at")

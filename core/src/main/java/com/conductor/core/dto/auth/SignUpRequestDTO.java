@@ -20,6 +20,4 @@ public class SignUpRequestDTO {
     private String firstName;
     @JsonProperty("last_name")
     private String lastName;
-    @JsonProperty("user_type")
-    private UserType userType;
 }

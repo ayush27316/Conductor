@@ -41,6 +41,7 @@ public class EventService {
     }
 
 
+
     public List<EventDTO> getAllEvents() {
 
        return eventRepository.findAll().stream()

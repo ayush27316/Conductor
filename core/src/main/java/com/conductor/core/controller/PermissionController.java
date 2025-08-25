@@ -1,12 +1,8 @@
-package com.conductor.core.controler;
+package com.conductor.core.controller;
 
 import com.conductor.core.dto.permission.GrantPermissionRequestDTO;
 import com.conductor.core.dto.permission.GrantPermissionResponseDTO;
-import com.conductor.core.dto.permission.PermissionDTO;
 import com.conductor.core.dto.permission.RevokePermissionRequestDTO;
-import com.conductor.core.model.permission.AccessLevel;
-import com.conductor.core.model.permission.Resource;
-import com.conductor.core.model.user.User;
 import com.conductor.core.security.UserPrincipal;
 import com.conductor.core.service.PermissionService;
 import com.conductor.core.service.UserService;
@@ -17,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/permissions")
@@ -49,13 +43,13 @@ public class PermissionController {
             @Valid @RequestBody RevokePermissionRequestDTO request) {
         return ResponseEntity.noContent().build();
     }
-
-    /**
-     * Get all permissions for a specific user
-     */
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<PermissionDTO>> getUserPermissions(@PathVariable String userExternalId) {
-        List<PermissionDTO> permissions = permissionService.getUserPermissions(userExternalId);
-        return ResponseEntity.ok(permissions);
-    }
+//
+//    /**
+//     * Get all permissions for a specific user
+//     */
+//    @GetMapping("/user/{userId}")
+//    public ResponseEntity<List<PermissionDTO>> getUserPermissions(@PathVariable String userExternalId) {
+//        List<PermissionDTO> permissions = permissionService.getUserPermissions(userExternalId);
+//        return ResponseEntity.ok(permissions);
+//    }
 }

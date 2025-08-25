@@ -1,7 +1,12 @@
 package com.conductor.core.dto.permission;
 
 import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.user.User;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +28,13 @@ public class PermissionDTO {
     private String resourceName;
     @JsonProperty("resource_id")
     private String resourceId;
+    //wrong name it should be privillege
     private Map<String,String> permissions;
+    @JsonProperty("granted_at")
+    private ZonedDateTime grantedAt;
+    @JsonProperty("granted_by_user_id")
+    private String grantedByUserExternalId;
+    @JsonProperty("expires_at")
+    private ZonedDateTime expiresAt;
 
 }

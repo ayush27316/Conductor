@@ -152,23 +152,53 @@ public class PermissionService {
         return Pair.of(true, "");
     }
 
+    /*
+    * Returns An optional list of permissions this user has.
+    * An empty option mean that user can only access publicly
+    * available resources.
+    * */
     @Transactional
-    public List<PermissionDTO> getUserPermissions(String userExternalId){
-        User user = userRepository.findByExternalId(userExternalId).get();
+    public Optional<List<PermissionDTO>> getUserPermissions(User user){
         List<Permission> permissions = permissionRepository.findByUser(user);
+
+        if(permissions.isEmpty())
+        {
+            return Optional.empty();
+        }
         List<PermissionDTO> permissionDTOS = new ArrayList<>();
         for(Permission p : permissions){
             permissionDTOS.add(PermissionDTO.builder()
-                    .permissions(p.getPermissions())
                     .userExternalId(p.getUser().getExternalId())
                     .resourceId(p.getResourceId())
                     .resourceName(p.getResourceName())
+                    .permissions(p.getPermissions())
                     .build());
         }
-        return permissionDTOS;
-
+        return Optional.of(permissionDTOS);
     }
 
+    public List<PermissionDTO> createRequiredPermissions(String resourceName, String resourceId, Map<String, String> privileges) {
+        PermissionDTO permission = PermissionDTO.builder()
+                .resourceName(resourceName)
+                .resourceId(resourceId)
+                .permissions(privileges)
+                .build();
+
+        return List.of(permission);
+    }
+
+    // More specific helper methods
+    public List<PermissionDTO> requireReadAccess(String resourceName) {
+        return createRequiredPermissions(resourceName, null, Map.of("READ", "READ"));
+    }
+
+    public List<PermissionDTO> requireWriteAccess(String resourceName, String resourceId) {
+        return createRequiredPermissions(resourceName, resourceId, Map.of("WRITE", "WRITE"));
+    }
+
+    public List<PermissionDTO> requireDeleteAccess(String resourceName, String resourceId) {
+        return createRequiredPermissions(resourceName, resourceId, Map.of("DELETE", "DELETE"));
+    }
 
     /**
      * Revoke a specific permission from a user
