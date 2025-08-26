@@ -5,7 +5,7 @@ import com.conductor.core.dto.ErrorDetails;
 import com.conductor.core.dto.OrganizationRegistrationRequest;
 import com.conductor.core.dto.OrganizationRegistrationResult;
 import com.conductor.core.exception.OrganizationRegistrationException;
-import com.conductor.core.model.org.OrganizationRegistration;
+import com.conductor.core.model.application.Application;
 import com.conductor.core.service.OrganizationRegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -161,13 +161,13 @@ public class OrganizationRegistrationController {
                     description = "List of pending organization registrations retrieved successfully",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = OrganizationRegistration.class))
+                            array = @ArraySchema(schema = @Schema(implementation = Application.class))
                     )
             )
     })
     public ResponseEntity<?> getAllPendingOrganizations() {
 
-        List<OrganizationRegistration> pendingRegistrations =
+        List<Application> pendingRegistrations =
                     organizationRegistrationService.getAllOrganizationsWaitingForApproval();
 
         return ResponseEntity.ok(Map.of(
@@ -231,9 +231,9 @@ public class OrganizationRegistrationController {
 //        return "Project updated";
 //    }
 //
-//    // Example 4: Using the second overload with resource ID
+//    // Example 4: Using the second overload with resourceType ID
 //    @PreAuthorize("hasPermission(#resourceId, 'ADMIN', @permissionService.createRequiredPermissions('RESOURCE_MANAGEMENT', #resourceId, {'DELETE': 'DELETE'}))")
 //    @DeleteMapping("/resources/{resourceId}")
 //    public String deleteResource(@PathVariable String resourceId) {
-//        return "Resource deleted";
+//        return "ResourceType deleted";
 //    }

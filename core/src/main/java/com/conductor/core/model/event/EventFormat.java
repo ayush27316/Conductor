@@ -1,11 +1,13 @@
 package com.conductor.core.model.event;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import com.conductor.core.util.Option;
 
-public enum EventFormat {
+public enum EventFormat implements Option {
+
     IN_PERSON("in_person"),
+
     ONLINE("online"),
+
     HYBRID("hybrid");
 
     private String name;
@@ -14,13 +16,8 @@ public enum EventFormat {
         this.name = name;
     };
 
+    @Override
     public String getName(){
         return this.name;
-    }
-
-    public static String getAllOptions() {
-        return Arrays.stream(EventFormat.values())
-                .map(EventFormat::getName)
-                .collect(Collectors.joining(", "));
     }
 }

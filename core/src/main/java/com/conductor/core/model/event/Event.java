@@ -1,15 +1,16 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.model.permission.BaseEntity;
+import com.conductor.core.model.common.File;
+import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.org.Organization;
-import com.conductor.core.model.ticket.TicketCreationStrategy;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -17,58 +18,61 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Event extends BaseEntity {
+@Table(name = "events")
+public class Event extends Resource {
 
-    /*
-    * Resource based access requires globally unique id's.
-    * This provides scope for application and database to
-    * horizontally scale. [? arguable?]
-    * */
-    @Column(name="external_id", unique = true, nullable = false)
-    private String externalId;
+    @Column(name = "external_id", nullable = false, updatable = false, unique = true)
+    @Builder.Default
+    private String externalId = UUID.randomUUID().toString();
 
-    private String status;
-    private String format;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EventStatus status;
 
-    @Column(name="short_name")
-    private String shortName;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EventFormat format;
 
-    @Column(name="display_name")
-    private String displayName;
+    @Column(nullable = false, length = 100)
+    private String name;
 
     @Column(name="website_url")
     private String websiteUrl;
 
+    @Column
     private String location;
 
-    @Column(name = "begin_time")
-    private ZonedDateTime begin;
+    @Column(name = "begin_time", nullable = false)
+    private LocalDateTime begin;
 
-    @Column(name = "end_time")
-    private ZonedDateTime end;
+    @Column(name = "end_time", nullable = false)
+    private LocalDateTime end;
 
     @Embedded
     private EventAccessDetails accessDetails;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "ticket_creation_strategy")
-    private TicketCreationStrategy ticketCreationStrategy;
+    @Column(name = "options")
+    @Builder.Default
+    private List<EventOption> options = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "organization_id_fk")
+    @Column(name = "total_tickets_to_be_sold", nullable = false)
+    private int totalTicketsToBeSold;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id_fk", nullable = false)
     private Organization organization;
 
-    /*
-    * Maybe there is a better way to validate tickets for
-    * an event instead of relaying on its association with
-    * an event. Maybe we can generate a key for every event
-    * and sign each ticket with this key. Then events key can
-    * be cached and tickets can be validated easily.
-    * @ManyToMany
-    * private List<Ticket> tickets;
-    **/
+//    @OneToOne
+//    @JoinColumn(name = "image_file_id_fk")
+//    private File imageFile;
+
+    @Column(nullable = false , length = 1000)
+    private String description;
+
+
     @PrePersist
-    public void ensureExternalId() {
+    public void prePersist() {
+        super.setResourceType(ResourceType.EVENT);
         if (externalId == null) {
             externalId = UUID.randomUUID().toString();
         }

@@ -13,25 +13,25 @@ import java.util.List;
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
 
-    /**
-     * Find all permissions for a specific user
-     */
-    List<Permission> findByUser(User user);
-
-    /**
-     * Find permissions for a user on a specific resource. A List
-     * of permissions has been used but by design of granting permissions
-     * returned list is either empty or has a single entry.
-     */
-    List<Permission> findByUserAndResourceNameAndResourceId(
-            User user, String resourceName, String resourceId);
-
-    /**
-     * Find all permissions granted for a specific resource.
-     * This is useful in finding all users that has access to
-     * a resource.
-     */
-    List<Permission> findByResourceNameAndResourceId(String resourceName, String resourceId);
+//    /**
+//     * Find all permissions for a specific user
+//     */
+//    List<Permission> findByUser(User user);
+//
+//    /**
+//     * Find permissions for a user on a specific resourceType. A List
+//     * of permissions has been used but by design of granting permissions
+//     * returned list is either empty or has a single entry.
+//     */
+//    List<Permission> findByUserAndResourceNameAndResourceId(
+//            User user, String resourceName, String resourceId);
+//
+//    /**
+//     * Find all permissions granted for a specific resourceType.
+//     * This is useful in finding all users that has access to
+//     * a resourceType.
+//     */
+//    List<Permission> findByResourceNameAndResourceId(String resourceName, String resourceId);
 //
 //    /**
 //     * Find expired permissions. [?] And p.isActive = true?
@@ -41,16 +41,16 @@ public interface PermissionRepository extends JpaRepository<Permission, Long> {
 
 //
 //    /**
-//     * Find permissions for a user on a specific resource with a specific privilege
+//     * Find permissions for a user on a specific resourceType with a specific privilege
 //     * This uses JSON path to search within the permissions map
 //     */
 //    @Query("SELECT p FROM Permission p WHERE p.user = :user " +
-//           "AND p.resource = :resource AND p.resourceId = :resourceId " +
+//           "AND p.resourceType = :resourceType AND p.resourceId = :resourceId " +
 //           "AND p.isActive = true " +
 //           "AND JSON_EXTRACT(p.permissions, CONCAT('$.', :privilege)) IS NOT NULL")
 //    List<Permission> findByUserAndResourceAndResourceIdAndPrivilege(
 //            @Param("user") User user,
-//            @Param("resource") String resource,
+//            @Param("resourceType") String resourceType,
 //            @Param("resourceId") String resourceId,
 //            @Param("privilege") String privilege);
 //
@@ -58,23 +58,23 @@ public interface PermissionRepository extends JpaRepository<Permission, Long> {
 //     * Check if user has specific permission using JSON path
 //     */
 //    @Query("SELECT COUNT(p) > 0 FROM Permission p WHERE p.user = :user " +
-//           "AND p.resource = :resource AND p.resourceId = :resourceId " +
+//           "AND p.resourceType = :resourceType AND p.resourceId = :resourceId " +
 //           "AND p.isActive = true " +
 //           "AND JSON_EXTRACT(p.permissions, CONCAT('$.', :privilege)) IS NOT NULL " +
 //           "AND (p.expiresAt IS NULL OR p.expiresAt > :now)")
 //    boolean hasPermission(@Param("user") User user,
-//                         @Param("resource") String resource,
+//                         @Param("resourceType") String resourceType,
 //                         @Param("resourceId") String resourceId,
 //                         @Param("privilege") String privilege,
 //                         @Param("now") ZonedDateTime now);
 //
 //    /**
-//     * Find all users with a specific privilege on a resource
+//     * Find all users with a specific privilege on a resourceType
 //     */
-//    @Query("SELECT p.user FROM Permission p WHERE p.resource = :resource " +
+//    @Query("SELECT p.user FROM Permission p WHERE p.resourceType = :resourceType " +
 //           "AND p.resourceId = :resourceId AND p.isActive = true " +
 //           "AND JSON_EXTRACT(p.permissions, CONCAT('$.', :privilege)) IS NOT NULL")
-//    List<User> findUsersWithPrivilege(@Param("resource") String resource,
+//    List<User> findUsersWithPrivilege(@Param("resourceType") String resourceType,
 //                                     @Param("resourceId") String resourceId,
 //                                     @Param("privilege") String privilege);
 //

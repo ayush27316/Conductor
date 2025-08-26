@@ -1,6 +1,7 @@
 package com.conductor.core.dto;
 
 import com.conductor.core.model.event.EventAccessDetails;
+import com.conductor.core.model.event.EventAccessStrategy;
 import com.conductor.core.model.event.EventFormat;
 import com.conductor.core.model.event.EventOption;
 import com.conductor.core.util.EnumValue;
@@ -40,23 +41,23 @@ public class EventRegistrationRequest {
     @NotNull(message = "Begin time is required")
     @JsonProperty("begin_time")
     @Schema(description = "Start time of the event", example = "2025-09-01T09:00:00Z")
-    private ZonedDateTime begin;
+    private LocalDateTime begin;
 
     @NotNull(message = "End time is required")
     @JsonProperty("end_time")
     @Schema(description = "End time of the event", example = "2025-09-01T17:00:00Z")
-    private ZonedDateTime end;
+    private LocalDateTime end;
 
     @Schema(
-            description = "Options available for event",
+            description = "Option available for event",
             implementation = EventOption.class
     )
     private List<@EnumValue(enumClass = EventOption.class)String> options;
 
     @NotNull(message = "Access strategy is required")
     @JsonProperty("access_strategy")
-    @Schema(implementation = EventAccessDetails.AccessStrategy.class)
-    @EnumValue(enumClass=EventAccessDetails.AccessStrategy.class)
+    @Schema(implementation = EventAccessStrategy.class)
+    @EnumValue(enumClass=EventAccessStrategy.class)
     private String accessStrategy;
 
     @NotNull(message = "Accessible from date is required")

@@ -3,6 +3,7 @@ package com.conductor.core.security;
 import com.conductor.core.dto.permission.PermissionDTO;
 import com.conductor.core.model.user.User;
 import com.conductor.core.model.user.UserRole;
+import com.conductor.core.util.OptionUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -118,7 +119,7 @@ public class JwtUtil {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            return UserRole.fromName(claims.get("user_role", String.class)).get();
+            return OptionUtil.fromName(UserRole.class,claims.get("user_role", String.class)).get();
         } catch (Exception e) {
             log.error("Error extracting externalId from JWT: {}", e.getMessage(), e);
             throw new RuntimeException("Error extracting externalId", e);

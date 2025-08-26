@@ -20,12 +20,12 @@ public class GrantPermissionRequestDTO {
     @JsonProperty("benefiting-user-id")
     private String bUserExternalId;
 
-    @NotNull(message = "Resource Name is required")
-    @JsonProperty("resource-name")
+    @NotNull(message = "ResourceType Name is required")
+    @JsonProperty("resourceType-name")
     private String resourceName;
 
-    @NotNull(message = "Resource ID is required")
-    @JsonProperty("resource-id")
+    @NotNull(message = "ResourceType ID is required")
+    @JsonProperty("resourceType-id")
     private String resourceId;
 
     /*

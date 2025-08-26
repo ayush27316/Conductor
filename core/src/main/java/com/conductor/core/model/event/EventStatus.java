@@ -1,7 +1,6 @@
 package com.conductor.core.model.event;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import com.conductor.core.util.Option;
 
 /**
  * Represents the lifecycle status of an {@link Event}.
@@ -10,7 +9,7 @@ import java.util.stream.Collectors;
  * creation, execution, and closure.
  * </p>
  */
-public enum EventStatus {
+public enum EventStatus implements Option {
 
     /**
      * The event has been created but not yet started/live.
@@ -20,7 +19,7 @@ public enum EventStatus {
     /**
      * The event is currently live and accessible to participants.
      */
-    LIVE("draft"),
+    LIVE("live"),
 
     /**
      * The event has ended and is no longer active.
@@ -39,14 +38,8 @@ public enum EventStatus {
         this.name = name;
     };
 
+    @Override
     public String getName(){
         return this.name;
-    }
-
-
-    public static String getAllOptions() {
-        return Arrays.stream(EventStatus.values())
-                .map(EventStatus::getName)
-                .collect(Collectors.joining(", "));
     }
 }

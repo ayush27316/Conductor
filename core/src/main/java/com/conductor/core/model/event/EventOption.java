@@ -1,5 +1,7 @@
 package com.conductor.core.model.event;
 
+import com.conductor.core.util.Option;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
@@ -11,7 +13,7 @@ import java.util.stream.Stream;
  * These options control ticket distribution, approval flows,
  * and payment strategies within an event.
  */
-public enum EventOption {
+public enum EventOption implements Option {
 
     /**
      * Tickets can only be distributed before the event starts.
@@ -55,30 +57,8 @@ public enum EventOption {
         this.name = name;
     }
 
-    /**
-     * @return the string identifier of the option
-     */
+    @Override
     public String getName() {
         return this.name;
-    }
-
-    private static final Map<String, EventOption> LOOKUP =
-            Stream.of(values()).collect(Collectors.toMap(EventOption::getName, r -> r));
-
-    /**
-     * Resolves an EventOption from its string name.
-     *
-     * @param name the option name
-     * @return an Optional containing the matching EventOption, or empty if not found
-     */
-    public static Optional<EventOption> fromName(String name) {
-        return Optional.ofNullable(LOOKUP.get(name));
-    }
-
-
-    public static String getAllOptions() {
-        return Arrays.stream(EventOption.values())
-                .map(EventOption::getName)
-                .collect(Collectors.joining(", "));
     }
 }

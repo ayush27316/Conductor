@@ -1,11 +1,7 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.model.permission.Resource;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.conductor.core.model.common.AccessLevel;
+import com.conductor.core.util.Option;
 
 /**
  * Defines the different privileges that can be granted within an {@link Event}.
@@ -15,12 +11,12 @@ import java.util.stream.Stream;
  * to create events, but event-specific privileges control what can be done
  * within each individual event.
  */
-public enum EventPrivilege {
+public enum EventPrivilege implements Option {
 
     /**
      * Represents event operators that might facilitate check-ins, ticket approval etc.
      * <p>
-     * Access to this resource controls which users can create, delete or update operators
+     * Access to this resourceType controls which users can create, delete or update operators
      * for this specific event.
      * </p>
      */
@@ -34,8 +30,8 @@ public enum EventPrivilege {
 
     /**
      * Represents audit-related information for this event.
-     * <p>{@link EventAudit} can only be read. Therefore, AUDIT resource
-     * can only have READ {@link com.conductor.core.model.permission.AccessLevel}
+     * <p>{@link EventAudit} can only be read. Therefore, AUDIT resourceType
+     * can only have READ {@link AccessLevel}
      * </p>
      */
     AUDIT("audit"),
@@ -43,7 +39,7 @@ public enum EventPrivilege {
     /**
      * Represents event members or participants of an event.
      * <p>
-     * Access to this resource controls who can
+     * Access to this resourceType controls who can
      * view, add, remove, or manage members within
      * the context of this specific event.
      * </p>
@@ -69,22 +65,8 @@ public enum EventPrivilege {
         this.name = name;
     };
 
+    @Override
     public String getName(){
         return this.name;
-    }
-
-
-
-    private static final Map<String, EventPrivilege> LOOKUP =
-            Stream.of(values()).collect(Collectors.toMap(EventPrivilege::getName, r -> r));
-
-    /**
-     * Resolves a resource from its string name.
-     *
-     * @param name the resource name
-     * @return an Optional containing the matching Resource, or empty if not found
-     */
-    public static Optional<EventPrivilege> fromName(String name) {
-        return Optional.ofNullable(LOOKUP.get(name));
     }
 }

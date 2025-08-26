@@ -1,5 +1,7 @@
 package com.conductor.core.model.permission;
 
+import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.user.User;
 import com.conductor.core.util.PermissionMapConverter;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -13,7 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
- * Represents a single permission grant for a user on a specific resource.
+ * Represents a single permission grant for a user on a specific resourceType.
  * This is the atomic unit of permission in the system.
  */
 @Entity
@@ -27,27 +29,18 @@ public class Permission extends BaseEntity {
     /**
      * The user this permission is granted to
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonBackReference
     private User user;
 
 
-    /*
-    * external_id on resources (organization, events...)
-    * are mapped to resourceID here
-    * */
-    @Column(name = "resource_id", nullable = false)
-    private String resourceId;
+    @ManyToOne
+    @JoinColumn(name = "resource_id_fk", nullable = false)
+    private Resource resource;
 
     /**
-     * The resource this permission applies to
-     */
-    @Column(name = "resource_name", nullable = false)
-    private String resourceName;
-
-    /**
-     * Map of privileges to access levels for this resource
+     * Map of privileges to access levels for this resourceType
      * Key: privilege name, Value: access level
      */
     @Convert(converter = PermissionMapConverter.class)

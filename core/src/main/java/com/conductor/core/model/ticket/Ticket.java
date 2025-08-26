@@ -1,14 +1,16 @@
 package com.conductor.core.model.ticket;
 
-import com.conductor.core.model.permission.BaseEntity;
+import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.event.Event;
+import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.UUID;
 
 
 /**
@@ -19,30 +21,32 @@ import java.util.List;
 @Entity
 @Builder
 @Data
+@Table(name = "tickets")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Ticket extends BaseEntity {
+public class Ticket extends Resource {
 
-    private String tier;
+    @Column(name="external_id", unique = true, updatable = false, nullable = false)
+    @Builder.Default
+    private String externalId = UUID.randomUUID().toString();
 
-    private String codex;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id_fk", nullable = false)
+    private User user;
 
-//    @Enumerated(EnumType.STRING)
-//    private TicketStatus status;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "event_id_fk", nullable = false)
+    private Event event;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TicketStatus status;
 
-    /*arguable if we need a bidirectional mapping*/
-    @OneToOne
-    @JoinColumn(name = "ticket_reservations")
-    private TicketReservation reservation;
-
-    /**
-     * This list only give specifics about events associated with this ticket
-     * but whether events give access to this ticket depends on the event.
-     * We should incorporate a key and token validation here instead of
-     * relaying on associations with events.
-     */
-    @ManyToMany
-    private List<Event> accessibleEvents;
-
+    @PrePersist
+    public void prePersist() {
+        super.setResourceType(ResourceType.TICKET);
+        if (externalId == null) {
+            externalId = UUID.randomUUID().toString();
+        }
+    }
 }

@@ -1,6 +1,6 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.model.permission.BaseEntity;
+import com.conductor.core.model.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +20,7 @@ public class EventAudit extends BaseEntity {
     @Column(name ="total_tickets_sold")
     private int totalTicketsSold;
 
-    @OneToOne(optional = false)
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id_fk", nullable=false)
     private Event event;
 }

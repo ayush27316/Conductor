@@ -1,6 +1,6 @@
 package com.conductor.core.model.org;
 
-import com.conductor.core.model.permission.BaseEntity;
+import com.conductor.core.model.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,8 +17,8 @@ public class OrganizationAudit extends BaseEntity {
     @Column(name="total_tickets_sold")
     private int totalTicketsSold;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organization_id_fk", nullable = true, unique = true)
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id_fk", nullable = false, unique = true)
     private Organization organization;
 
     public static OrganizationAudit getBlankAudit(Organization organization){

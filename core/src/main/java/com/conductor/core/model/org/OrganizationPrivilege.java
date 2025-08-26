@@ -1,20 +1,17 @@
 package com.conductor.core.model.org;
 
-import com.conductor.core.model.event.EventPrivilege;
-import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.common.AccessLevel;
+import com.conductor.core.util.Option;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Defines the different privileges that an {@link Organization}
  * can grant to its operators. These privileges control access to
  * organization-level resources and operations.
  */
-public enum OrganizationPrivilege {
+public enum OrganizationPrivilege implements Option {
 
     /**
      * Grants access to creating and managing operators (users) for an organization.
@@ -68,22 +65,23 @@ public enum OrganizationPrivilege {
         this.name = name;
     };
 
+    @Override
     public String getName(){
         return this.name;
     }
-
-    private static final Map<String, OrganizationPrivilege> LOOKUP =
-            Stream.of(values()).collect(Collectors.toMap(OrganizationPrivilege::getName, r -> r));
-
-    /**
-     * Resolves a resource from its string name.
-     *
-     * @param name the resource name
-     * @return an Optional containing the matching Resource, or empty if not found
-     */
-    public static Optional<OrganizationPrivilege> fromName(String name) {
-        return Optional.ofNullable(LOOKUP.get(name));
-    }
+//
+//    private static final Map<String, OrganizationPrivilege> LOOKUP =
+//            Stream.of(values()).collect(Collectors.toMap(OrganizationPrivilege::getName, r -> r));
+//
+//    /**
+//     * Resolves a resourceType from its string name.
+//     *
+//     * @param name the resourceType name
+//     * @return an Optional containing the matching ResourceType, or empty if not found
+//     */
+//    public static Optional<OrganizationPrivilege> fromName(String name) {
+//        return Optional.ofNullable(LOOKUP.get(name));
+//    }
 
     public static Map<String,String> getOwnerPrivileges(){
         Map<String, String> privileges = new HashMap<>();

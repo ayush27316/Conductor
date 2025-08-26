@@ -1,26 +1,24 @@
 package com.conductor.core.model.user;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.conductor.core.model.common.AccessLevel;
+import com.conductor.core.util.Option;
 
 /**
  * Represents the different categories of users that can interact with conductor.
  */
-public enum UserRole {
+public enum UserRole implements Option {
 
     /**
-     * System administrator with 'WRITE' {@link com.conductor.core.model.permission.AccessLevel}
-     * to all the resource.
+     * System administrator with 'WRITE' {@link AccessLevel}
+     * to all the resourceType.
      */
     ADMIN("ADMIN"),
 
     /**
      * Event operator or Organization level operators responsible for tasks such as
      * check-ins, ticket validation, or managing event-related operations. An
-     * operators permissions for a resource must be fetched from PermissionRegistry
-     * of the respective resource.
+     * operators permissions for a resourceType must be fetched from PermissionRegistry
+     * of the respective resourceType.
      */
     OPERATOR("OPERATOR"),
 
@@ -47,23 +45,24 @@ public enum UserRole {
         this.name = name;
     }
 
+    @Override
     public String getName(){
         return this.name;
     }
 
 
-    private static final Map<String, UserRole> LOOKUP =
-            Stream.of(values()).collect(Collectors.toMap(UserRole::getName, r -> r));
-
-    /**
-     * Resolves a user type from its string name.
-     *
-     * @param name the type name
-     * @return an Optional containing the matching type, or empty if not found
-     */
-    public static Optional<UserRole> fromName(String name) {
-        return Optional.ofNullable(LOOKUP.get(name));
-    }
-
+//    private static final Map<String, UserRole> LOOKUP =
+//            Stream.of(values()).collect(Collectors.toMap(UserRole::getName, r -> r));
+//
+//    /**
+//     * Resolves a user type from its string name.
+//     *
+//     * @param name the type name
+//     * @return an Optional containing the matching type, or empty if not found
+//     */
+//    public static Optional<UserRole> fromName(String name) {
+//        return Optional.ofNullable(LOOKUP.get(name));
+//    }
+//
 
 }

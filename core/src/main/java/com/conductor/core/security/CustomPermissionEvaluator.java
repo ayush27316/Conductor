@@ -47,7 +47,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
     @Override
     public boolean hasPermission(Authentication auth, Serializable targetId, String targetType, Object permission) {
-        // This overload can be used for resource-specific permissions
+        // This overload can be used for resourceType-specific permissions
         if (auth == null || !auth.isAuthenticated()) {
             return false;
         }
@@ -55,7 +55,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         User userPrincipal = (User) auth.getPrincipal();
 
         // targetType represents the user type requirement
-        // targetId represents the specific resource ID
+        // targetId represents the specific resourceType ID
         // permission represents the required permission DTO list
 
         if (targetType != null && !targetType.equals(userPrincipal.getRole())) {
@@ -95,24 +95,24 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
      */
     private boolean hasSpecificPermission(List<Permission> userPermissions,
                                           Permission requiredPermission) {
-        for (Permission userPerm : userPermissions) {
-            // Check if resource matches
-            if (requiredPermission.getResourceName() != null &&
-                    !requiredPermission.getResourceName().equals(userPerm.getResourceName())) {
-                continue;
-            }
-
-            // Check if resource ID matches (if specified)
-            if (requiredPermission.getResourceId() != null &&
-                    !requiredPermission.getResourceId().equals(userPerm.getResourceId())) {
-                continue;
-            }
-
-            // Check if user has all required privileges with sufficient access levels
-            if (hasRequiredPrivileges(userPerm.getPrivileges(), requiredPermission.getPrivileges())) {
-                return true;
-            }
-        }
+//        for (Permission userPerm : userPermissions) {
+//            // Check if resourceType matches
+//            if (requiredPermission.getResourceName() != null &&
+//                    !requiredPermission.getResourceName().equals(userPerm.getResourceName())) {
+//                continue;
+//            }
+//
+//            // Check if resourceType ID matches (if specified)
+//            if (requiredPermission.getResourceId() != null &&
+//                    !requiredPermission.getResourceId().equals(userPerm.getResourceId())) {
+//                continue;
+//            }
+//
+//            // Check if user has all required privileges with sufficient access levels
+//            if (hasRequiredPrivileges(userPerm.getPrivileges(), requiredPermission.getPrivileges())) {
+//                return true;
+//            }
+//        }
 
         return false;
     }

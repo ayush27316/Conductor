@@ -1,6 +1,5 @@
 package com.conductor.core.dto.permission;
 
-import com.conductor.core.model.permission.Resource;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -26,12 +25,12 @@ public class RevokePermissionRequestDTO {
     @JsonProperty("providing-user-id")
     private Long pUserExternalId;
 
-    @NotNull(message = "Resource Name is required")
-    @JsonProperty("resource-name")
+    @NotNull(message = "ResourceType Name is required")
+    @JsonProperty("resourceType-name")
     private String resourceName;
 
-    @NotNull(message = "Resource ID is required")
-    @JsonProperty("resource-id")
+    @NotNull(message = "ResourceType ID is required")
+    @JsonProperty("resourceType-id")
     private String resourceId;
 
     /*

@@ -1,11 +1,9 @@
 package com.conductor.core.model.org;
 
-import com.conductor.core.model.permission.BaseEntity;
+import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.event.Event;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.HashSet;
@@ -19,41 +17,28 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
-public class Organization extends BaseEntity {
+public class Organization extends Resource {
 
-    @NotBlank(message = "Organization name is required")
-    @Size(max = 255, message = "Name must be less than 255 characters")
-    @Column(name = "name", nullable = false, length = 255, unique = true)
-    @EqualsAndHashCode.Include
-    private String name;
-
-    /*This id is used to identify this resource globally.*/
     @Column(name = "external_id", nullable = false, updatable = false, unique = true)
     @Builder.Default
     private String externalId = UUID.randomUUID().toString();
 
-    @NotBlank(message = "Organization name is required")
-    @Size(max = 500, message = "Description must be less than 500 characters")
-    @Column(name = "description", length = 500)
+    @Column(name = "name", nullable = false, length = 255, unique = true)
+    private String name;
+
+    @Column(name = "description", length = 1000)
     private String description;
 
-    @NotBlank(message = "Organization email is required")
-    @Email(message = "Invalid email format")
-    @Size(max = 255, message = "Email must be less than 255 characters")
-    @Column(name = "email", unique = true, length = 255)
+    @Column(name = "email", unique = true, nullable = false, length = 255)
     private String email;
 
-    /*
-    * organizations can put different tags to showcase it to users
-    * */
+    @Column
     private List<String> tags;
-
 
     @Column(name = "website_url")
     private String websiteUrl;
 
-    @Column(name = "locations")
+    @Column
     private String locations;
 
     @OneToMany(mappedBy = "organization",
@@ -63,7 +48,8 @@ public class Organization extends BaseEntity {
     private Set<Event> events = new HashSet<>();
 
     @PrePersist
-    public void ensureExternalId() {
+    public void prePersist() {
+        super.setResourceType(ResourceType.ORGANIZATION);
         if (externalId == null) {
             externalId = UUID.randomUUID().toString();
         }

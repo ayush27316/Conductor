@@ -1,9 +1,5 @@
 package com.conductor.core.dto;
 
-import com.conductor.core.model.event.Event;
-import com.conductor.core.model.event.EventFormat;
-import com.conductor.core.model.event.EventStatus;
-import com.conductor.core.model.ticket.TicketCreationStrategy;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

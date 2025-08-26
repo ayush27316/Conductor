@@ -30,10 +30,10 @@ public class EventController {
     }
 
 
-    @GetMapping
-    public ResponseEntity<List<EventDTO>> getAllEvents(){
-        return ResponseEntity.ok(eventService.getAllEvents());
-    }
+//    @GetMapping
+//    public ResponseEntity<List<EventDTO>> getAllEvents(){
+//        return ResponseEntity.ok(eventService.getAllEvents());
+//    }
 
 //    @GetMapping
 //    public ResponseEntity<List<Event>> getEventsByOrganizationName(

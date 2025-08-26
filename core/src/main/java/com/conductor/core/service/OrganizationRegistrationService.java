@@ -3,14 +3,13 @@ package com.conductor.core.service;
 import com.conductor.core.dto.ApproveOrganizationRequest;
 import com.conductor.core.dto.OrganizationRegistrationRequest;
 import com.conductor.core.dto.OrganizationRegistrationResult;
-import com.conductor.core.dto.auth.SignUpRequestDTO;
 import com.conductor.core.exception.OrganizationApprovalException;
 import com.conductor.core.exception.OrganizationRegistrationException;
+import com.conductor.core.model.application.Application;
+import com.conductor.core.model.application.ApplicationStatus;
 import com.conductor.core.model.org.OrganizationPrivilege;
-import com.conductor.core.model.org.OrganizationRegistration;
-import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.permission.Permission;
-import com.conductor.core.model.permission.Resource;
+import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.user.UserRole;
 import com.conductor.core.util.OrganizationMapper;
 import com.conductor.core.model.org.Organization;
@@ -18,9 +17,6 @@ import com.conductor.core.model.org.OrganizationAudit;
 import com.conductor.core.model.user.User;
 import com.conductor.core.repository.*;
 import com.conductor.core.util.Pair;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,14 +31,10 @@ import java.util.*;
 @RequiredArgsConstructor
 public class OrganizationRegistrationService {
 
-    private final OrganizationRegistrationRepository organizationRegistrationRepository;
-    private final EventRepository eventRepository;
+    private final ApplicationRepository applicationRepository;
     private final OrganizationRepository organizationRepository;
     private final OrganizationAuditRepository auditRepository;
-    private final TicketReservationRepository ticketReservationRepository;
     private final UserRepository userRepository;
-    private final OrganizationMapper organizationMapper;
-    private final AuthenticationService authenticationService;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -56,17 +48,15 @@ public class OrganizationRegistrationService {
     @Transactional
     public OrganizationRegistrationResult registerOrganization(OrganizationRegistrationRequest request) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
-            throw new SecurityException("Invalid authentication context");
-        }
+        User principal = getCurrentUser();
 
-        User principal = (User) authentication.getPrincipal();
+        Pair<Boolean, String> result =
+                isUserEligibleToCreateNewApplication(principal);
 
-        if (userHasPendingOrganizationRegistration(principal)) {
+        if (!result.getStatus()) {
             return OrganizationRegistrationResult.builder()
                     .success(false)
-                    .message("User already has a pending organization registration.")
+                    .message(result.getMessage())
                     .build();
         }
 
@@ -93,18 +83,17 @@ public class OrganizationRegistrationService {
 
             organizationRepository.save(organization);
 
-            OrganizationRegistration registration = OrganizationRegistration.builder()
-                    .organization(organization)
-                    .user(principal)
-                    .status(OrganizationRegistration.Status.PENDING)
+            Application application = Application.builder()
+                    .resource(organization)
+                    .submittedBy(principal)
                     .build();
 
-            registration = organizationRegistrationRepository.save(registration);
+            applicationRepository.save(application);
 
             return OrganizationRegistrationResult.builder()
                     .success(true)
-                    .registrationId(registration.getRegistrationId())
-                    .message("Organization registration submitted successfully")
+                    .registrationId(application.getExternalId())
+                    .message("Organization registration successfully")
                     .build();
 
         } catch (Exception e) {
@@ -114,12 +103,18 @@ public class OrganizationRegistrationService {
     }
 
 
-    private boolean userHasPendingOrganizationRegistration(User user) {
-        // Use exists query instead of loading full entities
-        return organizationRegistrationRepository.existsByUserAndStatus(
-                user,
-                OrganizationRegistration.Status.PENDING
+    private Pair<Boolean, String> isUserEligibleToCreateNewApplication(User user) {
+        List<Application> applications = applicationRepository.findByResource_ResourceTypeAndSubmittedBy(
+                ResourceType.ORGANIZATION,
+                getCurrentUser()
         );
+
+        if(applications.isEmpty()){
+            return Pair.of(true,"");
+        }
+
+        return Pair.of(false, "An organization application already exists.");
+
     }
 
     /**
@@ -128,31 +123,27 @@ public class OrganizationRegistrationService {
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean approveOrganization(ApproveOrganizationRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
-            throw new SecurityException("Invalid authentication context");
-        }
 
-        User principal = (User) authentication.getPrincipal();
+        User principal = getCurrentUser();
 
-        Optional<OrganizationRegistration> registrationOpt = organizationRegistrationRepository.findByRegistrationId(request.getRegistrationId());
+        Optional<Application> applicationOptional = applicationRepository.findByExternalId(request.getRegistrationId());
 
-        if(registrationOpt.isEmpty()){
+        if(applicationOptional.isEmpty()){
             throw new OrganizationRegistrationException("Registration Id is not valid.", new IllegalArgumentException());
         }
 
-        OrganizationRegistration registration = registrationOpt.get();
+        Application application = applicationOptional.get();
 
-        if (registration.getStatus() == OrganizationRegistration.Status.APPROVED) {
+        if (application.isApproved()) {
             throw new OrganizationRegistrationException("Organization is already approved", new IllegalStateException());
         }
 
         try{
-            registration.approve(principal, request.getNote());
+            application.approve(principal);
 
-            organizationRegistrationRepository.save(registration);
+            applicationRepository.save(application);
 
-            initiateOrganizationOnboarding(registration.getOrganization());
+            initiateOrganizationOnboarding((Organization) application.getResource());
 
         }catch (Exception e )
         {
@@ -170,8 +161,7 @@ public class OrganizationRegistrationService {
         Map<String, String> privileges = OrganizationPrivilege.getOwnerPrivileges();
 
         Permission permission = Permission.builder()
-                .resourceName(Resource.ORGANIZATION.getName())
-                .resourceId(org.getExternalId())
+                .resource(org)
                 .privileges(privileges).build();
 
         organizationRepository.save(org);
@@ -195,13 +185,21 @@ public class OrganizationRegistrationService {
         // transactions should be maintained if emailing fails
     }
 
+    public User getCurrentUser(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+            throw new SecurityException("Invalid authentication context");
+        }
+
+        return  (User) authentication.getPrincipal();
+    }
 
     /**
      * Get all organizations waiting for approval
      */
-    public List<OrganizationRegistration> getAllOrganizationsWaitingForApproval() {
+    public List<Application> getAllOrganizationsWaitingForApproval() {
 
-        List<OrganizationRegistration> registration =  organizationRegistrationRepository.findByStatus(OrganizationRegistration.Status.PENDING);
+        List<Application> registration =  applicationRepository.findByApplicationStatus(ApplicationStatus.PENDING);
         return registration;
 
     }
