@@ -11,6 +11,7 @@ import lombok.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "organizations")
@@ -28,8 +29,9 @@ public class Organization extends BaseEntity {
     private String name;
 
     /*This id is used to identify this resource globally.*/
-    @Column(name = "external_id")
-    private String externalId;
+    @Column(name = "external_id", nullable = false, updatable = false, unique = true)
+    @Builder.Default
+    private String externalId = UUID.randomUUID().toString();
 
     @NotBlank(message = "Organization name is required")
     @Size(max = 500, message = "Description must be less than 500 characters")
@@ -57,6 +59,14 @@ public class Organization extends BaseEntity {
     @OneToMany(mappedBy = "organization",
                orphanRemoval = true,
                fetch = FetchType.LAZY)
+    @Builder.Default
     private Set<Event> events = new HashSet<>();
 
+    @PrePersist
+    public void ensureExternalId() {
+        if (externalId == null) {
+            externalId = UUID.randomUUID().toString();
+        }
+    }
 }
+

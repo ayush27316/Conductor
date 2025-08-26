@@ -1,7 +1,9 @@
 package com.conductor.core.model.org;
 
 import com.conductor.core.model.event.EventPrivilege;
+import com.conductor.core.model.permission.AccessLevel;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -81,6 +83,17 @@ public enum OrganizationPrivilege {
      */
     public static Optional<OrganizationPrivilege> fromName(String name) {
         return Optional.ofNullable(LOOKUP.get(name));
+    }
+
+    public static Map<String,String> getOwnerPrivileges(){
+        Map<String, String> privileges = new HashMap<>();
+
+        privileges.put(EVENT.getName(), AccessLevel.WRITE.getName());
+        privileges.put(OPERATOR.getName(), AccessLevel.WRITE.getName());
+        privileges.put(CONFIG.getName(), AccessLevel.WRITE.getName());
+        privileges.put(AUDIT.getName(), AccessLevel.READ.getName());
+
+        return privileges;
     }
 
 }

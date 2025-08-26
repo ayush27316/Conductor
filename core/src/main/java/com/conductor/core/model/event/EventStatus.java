@@ -1,5 +1,8 @@
 package com.conductor.core.model.event;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Represents the lifecycle status of an {@link Event}.
  * <p>
@@ -38,5 +41,12 @@ public enum EventStatus {
 
     public String getName(){
         return this.name;
+    }
+
+
+    public static String getAllOptions() {
+        return Arrays.stream(EventStatus.values())
+                .map(EventStatus::getName)
+                .collect(Collectors.joining(", "));
     }
 }

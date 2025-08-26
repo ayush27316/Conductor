@@ -1,6 +1,5 @@
 package com.conductor.core.dto.auth;
 
-import com.conductor.core.model.user.UserType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

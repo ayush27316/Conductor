@@ -8,6 +8,8 @@ import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Represents access-related details for an {@link Event}.
@@ -52,6 +54,12 @@ public class EventAccessDetails {
 
         public String getName(){
             return this.name;
+        }
+
+        public static String getAllOptions() {
+            return Arrays.stream(AccessStrategy.values())
+                    .map(AccessStrategy::getName)
+                    .collect(Collectors.joining(", "));
         }
     }
 

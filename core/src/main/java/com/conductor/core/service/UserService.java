@@ -2,7 +2,6 @@ package com.conductor.core.service;
 
 import com.conductor.core.model.user.User;
 import com.conductor.core.repository.UserRepository;
-import com.conductor.core.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,6 +23,6 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User not found with username:" + username)
                 );
-        return UserPrincipal.create(user);
+        return user;
     }
 }

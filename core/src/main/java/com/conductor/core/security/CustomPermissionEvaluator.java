@@ -1,7 +1,8 @@
 package com.conductor.core.security;
 
 import com.conductor.core.dto.permission.PermissionDTO;
-import com.conductor.core.model.user.UserType;
+import com.conductor.core.model.permission.Permission;
+import com.conductor.core.model.user.User;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import java.io.Serializable;
@@ -17,21 +18,21 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         }
 
         // Get the UserPrincipal from authentication
-        UserPrincipal userPrincipal = (UserPrincipal) auth.getPrincipal();
+        User userPrincipal = (User) auth.getPrincipal();
 
-        // targetDomainObject should be the user type (String)
-        String requiredUserType = (String) targetDomainObject;
+        // targetDomainObject should be the user role(String)
+        String requiredRole = (String) targetDomainObject;
 
-        if(permission == null && userPrincipal.getUserType().equals(requiredUserType) ){
+        if(permission == null && userPrincipal.getRole().equals(requiredRole) ){
             return true;
         }
         // permission should be a List<PermissionDTO> containing the required permissions
         @SuppressWarnings("unchecked")
-        List<PermissionDTO> requiredPermissions = (List<PermissionDTO>) permission;
+        List<Permission> requiredPermissions = (List<Permission>) permission;
 
         // Check if user type matches (if specified)
-        if (requiredUserType != null && !requiredUserType.isEmpty()) {
-            if (!requiredUserType.equals(userPrincipal.getUserType())) {
+        if (requiredRole != null && !requiredRole.isEmpty()) {
+            if (!requiredRole.equals(userPrincipal.getRole())) {
                 return false;
             }
         }
@@ -51,18 +52,18 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
             return false;
         }
 
-        UserPrincipal userPrincipal = (UserPrincipal) auth.getPrincipal();
+        User userPrincipal = (User) auth.getPrincipal();
 
         // targetType represents the user type requirement
         // targetId represents the specific resource ID
         // permission represents the required permission DTO list
 
-        if (targetType != null && !targetType.equals(userPrincipal.getUserType())) {
+        if (targetType != null && !targetType.equals(userPrincipal.getRole())) {
             return false;
         }
 
         @SuppressWarnings("unchecked")
-        List<PermissionDTO> requiredPermissions = (List<PermissionDTO>) permission;
+        List<Permission> requiredPermissions = (List<Permission>) permission;
 
         if (requiredPermissions != null && !requiredPermissions.isEmpty()) {
             return hasAllRequiredPermissions(userPrincipal.getPermissions(), requiredPermissions);
@@ -74,13 +75,13 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
     /**
      * Check if user has all required permissions
      */
-    private boolean hasAllRequiredPermissions(List<PermissionDTO> userPermissions,
-                                              List<PermissionDTO> requiredPermissions) {
+    private boolean hasAllRequiredPermissions(List<Permission> userPermissions,
+                                              List<Permission> requiredPermissions) {
         if (userPermissions == null || userPermissions.isEmpty()) {
             return false;
         }
 
-        for (PermissionDTO required : requiredPermissions) {
+        for (Permission required : requiredPermissions) {
             if (!hasSpecificPermission(userPermissions, required)) {
                 return false;
             }
@@ -92,9 +93,9 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
     /**
      * Check if user has a specific permission with required access level
      */
-    private boolean hasSpecificPermission(List<PermissionDTO> userPermissions,
-                                          PermissionDTO requiredPermission) {
-        for (PermissionDTO userPerm : userPermissions) {
+    private boolean hasSpecificPermission(List<Permission> userPermissions,
+                                          Permission requiredPermission) {
+        for (Permission userPerm : userPermissions) {
             // Check if resource matches
             if (requiredPermission.getResourceName() != null &&
                     !requiredPermission.getResourceName().equals(userPerm.getResourceName())) {
@@ -108,7 +109,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
             }
 
             // Check if user has all required privileges with sufficient access levels
-            if (hasRequiredPrivileges(userPerm.getPermissions(), requiredPermission.getPermissions())) {
+            if (hasRequiredPrivileges(userPerm.getPrivileges(), requiredPermission.getPrivileges())) {
                 return true;
             }
         }

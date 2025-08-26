@@ -1,6 +1,7 @@
 package com.conductor.core.security;
 
 import com.conductor.core.dto.permission.PermissionDTO;
+import com.conductor.core.exception.TokenNotValidException;
 import com.conductor.core.model.user.User;
 import com.conductor.core.repository.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -46,25 +48,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             final String requestTokenHeader = request.getHeader("Authorization");
             if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
                 String token = requestTokenHeader.substring(7);
-                
+
+
+                if(!jwtUtil.validateToken(token)){
+                    throw new TokenNotValidException("Token invalid");
+                };
+
                 try {
                     String userExternalId = jwtUtil.getExternalId(token);
-                    List<PermissionDTO> permissionDTOS = jwtUtil.getPermissions(token);
-                    String type = jwtUtil.getUserType(token);
+                    /*
+                    * giving permissions and roles out promotes front-end builder
+                    * to only present options that are relevant to this user
+                    * */
+                    //List<PermissionDTO> permissionDTOS = jwtUtil.getPermissions(token);
+                    //String userRole = jwtUtil.getUserRole(token);
 
                     if (userExternalId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        UserPrincipal userPrincipal =
-                                UserPrincipal.builder()
-                                        .externalId(userExternalId)
-                                        .userType(type)
-                                        .permissions(permissionDTOS)
-                                        .build();
+                        User userPrincipal = userRepository.findByExternalId(userExternalId).get();
 
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(
                                     userPrincipal, 
-                                    null, 
-                                    userPrincipal.getAuthorities()
+                                    null,
+                                        userPrincipal.getAuthorities()
                                 );
 
                         SecurityContextHolder.getContext().setAuthentication(auth);

@@ -2,6 +2,7 @@ package com.conductor.core.security;
 
 import com.conductor.core.dto.permission.PermissionDTO;
 import com.conductor.core.model.user.User;
+import com.conductor.core.model.user.UserRole;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -38,7 +39,7 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(UserPrincipal user) {
+    public String generateAccessToken(User user) {
         try {
 
             String permissionsJson = objectMapper.writeValueAsString(user.getPermissions());
@@ -47,7 +48,7 @@ public class JwtUtil {
                     .subject(user.getUsername())
                     .claim("user_external_id", user.getExternalId())
                     .claim("permissions", permissionsJson)
-                    .claim("user_type", user.getUserType())
+                    .claim("user_role", user.getRole().getName())
                     .issuedAt(new Date())
                     .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
                     .signWith(getSecretKey())
@@ -110,14 +111,14 @@ public class JwtUtil {
     }
 
 
-    public String getUserType(String token) {
+    public UserRole getUserRole(String token) {
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(getSecretKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            return claims.get("user_type", String.class);
+            return UserRole.fromName(claims.get("user_role", String.class)).get();
         } catch (Exception e) {
             log.error("Error extracting externalId from JWT: {}", e.getMessage(), e);
             throw new RuntimeException("Error extracting externalId", e);

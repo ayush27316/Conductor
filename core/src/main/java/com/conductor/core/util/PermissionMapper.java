@@ -36,7 +36,7 @@ public class PermissionMapper {
                         .userExternalId(p.getUser().getExternalId())
                         .resourceName(p.getResourceName())
                         .resourceId(p.getResourceId())
-                        .permissions(p.getPermissions())
+                        .permissions(p.getPrivileges())
                         .grantedAt(p.getGrantedAt())
                         .grantedByUserExternalId(p.getGrantedBy().getExternalId())
                         .expiresAt(p.getExpiresAt())

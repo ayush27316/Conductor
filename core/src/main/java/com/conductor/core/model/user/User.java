@@ -2,13 +2,18 @@ package com.conductor.core.model.user;
 
 import com.conductor.core.model.permission.BaseEntity;
 import com.conductor.core.model.permission.Permission;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,7 +21,7 @@ import java.util.UUID;
  * Represents a system user that can authenticate and interact with the platform.
  * <p>
  * This entity holds authentication credentials, profile information, and
- * an associated {@link UserType}.
+ * an associated {@link UserRole}.
  * </p>
  */
 @Entity
@@ -31,14 +36,15 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User extends BaseEntity {
+public class User extends BaseEntity implements UserDetails {
 
     @NotNull(message = "User type must be specified")
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
 
+    @Builder.Default
     @Column(name="external_id", unique = true, nullable = false)
-    private String externalId;
-
+    private String externalId = UUID.randomUUID().toString();
 
     @NotBlank(message = "Username cannot be blank")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
@@ -66,8 +72,35 @@ public class User extends BaseEntity {
     @Column(name = "email_address", nullable = false, unique = true, length = 150)
     private String emailAddress;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @JsonManagedReference
     private List<Permission> permissions;
+
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getName()));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return UserDetails.super.isAccountNonExpired();
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return UserDetails.super.isAccountNonLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return UserDetails.super.isCredentialsNonExpired();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserDetails.super.isEnabled();
+    }
 
     @PrePersist
     public void ensureExternalId() {

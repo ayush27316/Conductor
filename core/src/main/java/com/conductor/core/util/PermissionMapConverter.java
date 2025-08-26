@@ -20,28 +20,24 @@ public class PermissionMapConverter implements AttributeConverter<Map<String, St
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public String convertToDatabaseColumn(Map<String, String> permissions) {
-        if (permissions == null || permissions.isEmpty()) {
-            return "{}";
-        }
+    public String convertToDatabaseColumn(Map<String, String> attribute) {
         try {
-            return objectMapper.writeValueAsString(permissions);
-        } catch (JsonProcessingException e) {
-            log.error("Error converting permissions map to JSON", e);
-            return "{}";
+            return objectMapper.writeValueAsString(attribute);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error serializing permissions map", e);
         }
     }
 
     @Override
-    public Map<String, String> convertToEntityAttribute(String json) {
-        if (json == null || json.trim().isEmpty()) {
-            return new HashMap<>();
-        }
+    public Map<String, String> convertToEntityAttribute(String dbData) {
         try {
-            return objectMapper.readValue(json, new TypeReference<Map<String, String>>() {});
-        } catch (JsonProcessingException e) {
-            log.error("Error converting JSON to permissions map", e);
-            return new HashMap<>();
+            // Handle case where dbData itself is a JSON string
+            if (dbData != null && dbData.startsWith("\"")) {
+                dbData = objectMapper.readValue(dbData, String.class); // unwrap
+            }
+            return objectMapper.readValue(dbData, new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error deserializing permissions map", e);
         }
     }
 }

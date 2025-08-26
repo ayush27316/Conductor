@@ -1,9 +1,6 @@
 package com.conductor.core.controller;
 
-import com.conductor.core.dto.permission.GrantPermissionRequestDTO;
-import com.conductor.core.dto.permission.GrantPermissionResponseDTO;
 import com.conductor.core.dto.permission.RevokePermissionRequestDTO;
-import com.conductor.core.security.UserPrincipal;
 import com.conductor.core.service.PermissionService;
 import com.conductor.core.service.UserService;
 import jakarta.validation.Valid;
@@ -23,17 +20,17 @@ public class PermissionController {
     private final PermissionService permissionService;
     private final UserService userService;
 
-    /**
-     * Grant permission to a user
-     */
-    @PostMapping("/grant")
-    public ResponseEntity<GrantPermissionResponseDTO> grantPermission(
-            @Valid @RequestBody GrantPermissionRequestDTO request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
-
-        GrantPermissionResponseDTO responseDTO = permissionService.grantPermission(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
-    }
+//    /**
+//     * Grant permission to a user
+//     */
+//    @PostMapping("/grant")
+//    public ResponseEntity<GrantPermissionResponseDTO> grantPermission(
+//            @Valid @RequestBody GrantPermissionRequestDTO request,
+//            @AuthenticationPrincipal UserPrincipal currentUser) {
+//
+//        GrantPermissionResponseDTO responseDTO = permissionService.grantPermission(request);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+//    }
 
     /**
      * Revoke permission from a user

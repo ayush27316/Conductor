@@ -6,13 +6,11 @@ import com.conductor.core.dto.auth.SignUpRequestDTO;
 import com.conductor.core.dto.auth.SignUpResponseDTO;
 import com.conductor.core.exception.UsernameAlreadyTakenException;
 import com.conductor.core.model.user.User;
-import com.conductor.core.model.user.UserType;
+import com.conductor.core.model.user.UserRole;
 import com.conductor.core.repository.UserRepository;
 import com.conductor.core.security.JwtUtil;
-import com.conductor.core.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,9 +30,9 @@ public class AuthenticationService {
                     new UsernamePasswordAuthenticationToken(loginRequestDto.getUsername(), loginRequestDto.getPassword())
             );
 
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        User user =  (User) authentication.getPrincipal();
 
-        String token = authUtil.generateAccessToken(userPrincipal);
+        String token = authUtil.generateAccessToken(user);
         return new LoginResponseDTO(token);
     }
 
@@ -51,8 +49,7 @@ public class AuthenticationService {
                 .firstName(signupRequestDto.getFirstName())
                 .lastName(signupRequestDto.getLastName())
                 .emailAddress(signupRequestDto.getEmail())
-                .type("public")
-                .build();
+                .role(UserRole.USER).build();
         
         userRepository.save(user);
 

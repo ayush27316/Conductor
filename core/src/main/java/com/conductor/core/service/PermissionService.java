@@ -63,7 +63,7 @@ public class PermissionService {
             }
             permission = Permission.builder()
                     .user(user)
-                    .permissions(request.getPermissions())
+                    .privileges(request.getPermissions())
                     .resourceName(request.getResourceName())
                     .expiresAt(request.getExpiresAt())
                     .build();
@@ -77,11 +77,11 @@ public class PermissionService {
             permission = existingPermissions.get(0);
 
             //merge the exisitng permissions with new ones
-            Map<String, String> currentPermissions = permission.getPermissions();
-            Map<String, String> updatedPermissions = mergePermissions(
-                    currentPermissions, request.getPermissions());
+            Map<String, String> currentPrivileges = permission.getPrivileges();
+            Map<String, String> updatedPrivileges = mergePrevileges(
+                    currentPrivileges, request.getPermissions());
 
-            permission.setPermissions(updatedPermissions);
+            permission.setPrivileges(updatedPrivileges);
 
         }
 
@@ -158,45 +158,45 @@ public class PermissionService {
     * available resources.
     * */
     @Transactional
-    public Optional<List<PermissionDTO>> getUserPermissions(User user){
+    public Optional<List<Permission>> getUserPermissions(User user){
         List<Permission> permissions = permissionRepository.findByUser(user);
 
         if(permissions.isEmpty())
         {
             return Optional.empty();
         }
-        List<PermissionDTO> permissionDTOS = new ArrayList<>();
-        for(Permission p : permissions){
-            permissionDTOS.add(PermissionDTO.builder()
-                    .userExternalId(p.getUser().getExternalId())
-                    .resourceId(p.getResourceId())
-                    .resourceName(p.getResourceName())
-                    .permissions(p.getPermissions())
-                    .build());
-        }
-        return Optional.of(permissionDTOS);
+//        List<PermissionDTO> permissionDTOS = new ArrayList<>();
+//        for(Permission p : permissions){
+//            permissionDTOS.add(PermissionDTO.builder()
+//                    .userExternalId(p.getUser().getExternalId())
+//                    .resourceId(p.getResourceId())
+//                    .resourceName(p.getResourceName())
+//                    .permissions(p.getPermissions())
+//                    .build());
+//        }
+        return Optional.of(permissions);
     }
 
-    public List<PermissionDTO> createRequiredPermissions(String resourceName, String resourceId, Map<String, String> privileges) {
-        PermissionDTO permission = PermissionDTO.builder()
+    public List<Permission> createRequiredPermissions(String resourceName, String resourceId, Map<String, String> privileges) {
+        Permission permission = Permission.builder()
                 .resourceName(resourceName)
                 .resourceId(resourceId)
-                .permissions(privileges)
+                .privileges(privileges)
                 .build();
 
         return List.of(permission);
     }
 
     // More specific helper methods
-    public List<PermissionDTO> requireReadAccess(String resourceName) {
+    public List<Permission> requireReadAccess(String resourceName) {
         return createRequiredPermissions(resourceName, null, Map.of("READ", "READ"));
     }
 
-    public List<PermissionDTO> requireWriteAccess(String resourceName, String resourceId) {
+    public List<Permission> requireWriteAccess(String resourceName, String resourceId) {
         return createRequiredPermissions(resourceName, resourceId, Map.of("WRITE", "WRITE"));
     }
 
-    public List<PermissionDTO> requireDeleteAccess(String resourceName, String resourceId) {
+    public List<Permission> requireDeleteAccess(String resourceName, String resourceId) {
         return createRequiredPermissions(resourceName, resourceId, Map.of("DELETE", "DELETE"));
     }
 
@@ -220,17 +220,17 @@ public class PermissionService {
                         request.getResourceId());
 
         Permission permission = permissions.get(0);
-        Map<String, String> currentPermissions = permission.getPermissions();
+        Map<String, String> currentPermissions = permission.getPrivileges();
         Map<String, String> updatedPermissions = diffPermissions(currentPermissions, request.getPermissions());
 
-        permission.setPermissions(updatedPermissions);
+        permission.setPrivileges(updatedPermissions);
         permissionRepository.save(permission);
     }
 
     /**
      * Merge multiple permission maps
      */
-    public Map<String, String> mergePermissions(Map<String, String>... permissionMaps) {
+    public Map<String, String> mergePrevileges(Map<String, String>... permissionMaps) {
         Map<String, String> merged = new HashMap<>();
         for (Map<String, String> permissions : permissionMaps) {
             if (permissions != null) {

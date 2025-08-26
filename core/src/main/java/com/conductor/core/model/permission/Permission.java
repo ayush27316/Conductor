@@ -1,6 +1,8 @@
 package com.conductor.core.model.permission;
 
 import com.conductor.core.model.user.User;
+import com.conductor.core.util.PermissionMapConverter;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,6 +29,7 @@ public class Permission extends BaseEntity {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
     private User user;
 
 
@@ -47,11 +50,11 @@ public class Permission extends BaseEntity {
      * Map of privileges to access levels for this resource
      * Key: privilege name, Value: access level
      */
-    @Convert(converter = com.conductor.core.util.PermissionMapConverter.class)
-    @Column(name = "permissions", columnDefinition = "JSON")
-    private Map<String, String> permissions;
+    @Convert(converter = PermissionMapConverter.class)
+    @Column(name = "privileges", columnDefinition = "JSON")
+    private Map<String, String> privileges;
 
-    @Column(name = "granted_at", nullable = false)
+    @Column(name = "granted_at", nullable = true)
     private ZonedDateTime grantedAt;
 
     @ManyToOne(fetch = FetchType.EAGER)
