@@ -1,8 +1,7 @@
-package com.conductor.core.config;
+package com.conductor.core.security;
 
-import com.conductor.core.security.JwtAuthenticationFilter;
 import com.conductor.core.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,16 +16,12 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private UserService userService;
-    
-    @Autowired
-    private JwtAuthenticationFilter jwtFilter;
-    
-    @Autowired
-    private HandlerExceptionResolver handlerExceptionResolver;
+    private final UserService userService;
+    private final  JwtAuthenticationFilter jwtFilter;
+    private final  HandlerExceptionResolver handlerExceptionResolver;
 
     @Bean
     public PasswordEncoder passwordEncoder() {

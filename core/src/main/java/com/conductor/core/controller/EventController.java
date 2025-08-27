@@ -1,8 +1,8 @@
 package com.conductor.core.controller;
 
 import com.conductor.core.dto.EventDTO;
-import com.conductor.core.dto.EventRegistrationRequest;
 import com.conductor.core.dto.ResponseDTO;
+import com.conductor.core.exception.EventRegistrationFailedException;
 import com.conductor.core.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.lang.IllegalArgumentException;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/events")
@@ -23,30 +25,42 @@ public class EventController {
     @PreAuthorize("hasRole('OPERATOR')")
     @PostMapping("/register")
     public ResponseDTO<?> registerEvent(
-            @Valid @RequestBody EventRegistrationRequest request) {
+            @Valid @RequestBody EventDTO request) {
 
-        eventService.registerEvent(request);
-        return ResponseDTO.success("");
+        try {
+            Boolean result = eventService.registerEvent(request);
+            if(result){
+
+                return ResponseDTO.success("Event registration successful.");
+            }else {
+                throw new EventRegistrationFailedException("Event registration failed due to an internal server error");
+            }
+
+        }catch (EventRegistrationFailedException e){
+            return ResponseDTO.internalServerError(e.getMessage());
+        }catch (RuntimeException e){
+            return ResponseDTO.builder()
+                    .status(500)
+                    .success(false)
+                    .message("Registration failed due to an internal error")
+                    .description(e.getMessage())
+                    .timeStamp(LocalDateTime.now().toString())
+                    .build();
+        }
     }
 
 
-//    @GetMapping
-//    public ResponseEntity<List<EventDTO>> getAllEvents(){
-//        return ResponseEntity.ok(eventService.getAllEvents());
-//    }
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping
+    public ResponseDTO<?> getAllEvents(){
 
-//    @GetMapping
-//    public ResponseEntity<List<Event>> getEventsByOrganizationName(
-//            @RequestParam String organizationName) {
-//        List<Event> events = eventService.getEventsByOrganizationName(organizationName);
-//        return ResponseEntity.ok(events);
-//    }
-//
-//    @PostMapping("/operators")
-//    public ResponseEntity<Operator> addOperator(@RequestParam String organizationName,
-//                                                @RequestParam String eventName,
-//                                                @RequestBody Operator operator) {
-//        Operator savedOperator = eventService.addOperatorToEvent(organizationName, eventName, operator);
-//        return ResponseEntity.ok(savedOperator);
-//    }
+        try{
+            List<EventDTO> eventDTOList = eventService.getAllEvents();
+
+            return ResponseDTO.success(null, (Object)eventDTOList );
+        }catch (RuntimeException e){
+            return ResponseDTO.internalServerError(e.getMessage());
+        }
+
+    }
 }

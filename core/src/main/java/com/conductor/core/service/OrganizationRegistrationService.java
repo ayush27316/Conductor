@@ -199,8 +199,12 @@ public class OrganizationRegistrationService {
      */
     public List<Application> getAllOrganizationsWaitingForApproval() {
 
-        List<Application> registration =  applicationRepository.findByApplicationStatus(ApplicationStatus.PENDING);
-        return registration;
-
+        try {
+            List<Application> registration = applicationRepository.findByApplicationStatus(ApplicationStatus.PENDING);
+            return registration;
+        } catch (Exception e)
+        {
+            throw new RuntimeException("Internal Server Error");
+        }
     }
 }

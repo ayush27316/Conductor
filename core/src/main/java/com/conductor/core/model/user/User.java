@@ -41,7 +41,7 @@ public class User extends Resource implements UserDetails {
     @Column(name = "username", nullable = false, updatable = false, unique = true, length = 50)
     private String username;
 
-    @Column(name = "password", nullable = false, length = 255)
+    @Column(name = "password", nullable = false, length = 100)
     private String password;
 
     @Column(name = "first_name", nullable = false, length = 100)
@@ -61,7 +61,7 @@ public class User extends Resource implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getName()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getLabel()));
     }
 
     @Override

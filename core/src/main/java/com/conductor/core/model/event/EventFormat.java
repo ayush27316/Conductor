@@ -1,8 +1,13 @@
 package com.conductor.core.model.event;
 
 import com.conductor.core.util.Option;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum EventFormat implements Option {
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+public enum EventFormat{
 
     IN_PERSON("in_person"),
 
@@ -10,14 +15,33 @@ public enum EventFormat implements Option {
 
     HYBRID("hybrid");
 
-    private String name;
-    EventFormat(String name)
-    {
-        this.name = name;
-    };
+    private final String label;
 
-    @Override
-    public String getName(){
-        return this.name;
+    EventFormat(String label) {
+        this.label = label;
+    }
+
+    @JsonValue
+    public String getLabel() {
+        return label;
+    }
+
+    @JsonCreator
+    public static EventFormat fromValue(String value) {
+        for (EventFormat format : values()) {
+            if (format.label.equalsIgnoreCase(value)) {
+                return format;
+            }
+        }
+        throw new IllegalArgumentException("Unknown event format: " + value);
+    }
+
+    /**
+     * @return a comma-separated string of all event format options
+     */
+    public static String getAllOptions() {
+        return Arrays.stream(EventFormat.values())
+                .map(EventFormat::getLabel)
+                .collect(Collectors.joining(", "));
     }
 }

@@ -1,6 +1,11 @@
 package com.conductor.core.model.ticket;
 
 import com.conductor.core.util.Option;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Represents the lifecycle status of a {@link Ticket}.
@@ -9,7 +14,7 @@ import com.conductor.core.util.Option;
  * event lifecycle, including its availability, usage, and validity.
  * </p>
  */
-public enum TicketStatus implements Option {
+public enum TicketStatus  {
 
     /**
      * The ticket has been created but not yet used.
@@ -41,14 +46,33 @@ public enum TicketStatus implements Option {
      */
     REVOKED("revoked");
 
-    private final String name;
+    private final String label;
 
-    TicketStatus(String name) {
-        this.name = name;
+    TicketStatus(String label) {
+        this.label = label;
     }
 
-    @Override
-    public String getName() {
-        return this.name;
+    @JsonValue
+    public String getLabel() {
+        return label;
+    }
+
+    @JsonCreator
+    public static TicketStatus fromValue(String value) {
+        for (TicketStatus status : values()) {
+            if (status.label.equalsIgnoreCase(value)) {
+                return status;
+            }
+        }
+        throw new IllegalArgumentException("Unknown ticket status: " + value);
+    }
+
+    /**
+     * @return a comma-separated string of all ticket status options
+     */
+    public static String getAllOptions() {
+        return Arrays.stream(TicketStatus.values())
+                .map(TicketStatus::getLabel)
+                .collect(Collectors.joining(", "));
     }
 }

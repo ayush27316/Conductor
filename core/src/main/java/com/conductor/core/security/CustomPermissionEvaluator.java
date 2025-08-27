@@ -1,6 +1,5 @@
 package com.conductor.core.security;
 
-import com.conductor.core.dto.permission.PermissionDTO;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.user.User;
 import org.springframework.security.access.PermissionEvaluator;
@@ -26,8 +25,6 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         if(permission == null && userPrincipal.getRole().equals(requiredRole) ){
             return true;
         }
-        // permission should be a List<PermissionDTO> containing the required permissions
-        @SuppressWarnings("unchecked")
         List<Permission> requiredPermissions = (List<Permission>) permission;
 
         // Check if user type matches (if specified)
@@ -54,15 +51,10 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
         User userPrincipal = (User) auth.getPrincipal();
 
-        // targetType represents the user type requirement
-        // targetId represents the specific resourceType ID
-        // permission represents the required permission DTO list
-
         if (targetType != null && !targetType.equals(userPrincipal.getRole())) {
             return false;
         }
 
-        @SuppressWarnings("unchecked")
         List<Permission> requiredPermissions = (List<Permission>) permission;
 
         if (requiredPermissions != null && !requiredPermissions.isEmpty()) {

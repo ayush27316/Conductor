@@ -10,8 +10,14 @@
 * */
 package com.conductor.core;
 
+import com.conductor.core.model.user.User;
+import com.conductor.core.model.user.UserRole;
+import com.conductor.core.repository.UserRepository;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication(scanBasePackages = {
         "com.conductor.core",
@@ -20,5 +26,25 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class ConductorApplication {
     public static void main(String[] args) {
         SpringApplication.run(ConductorApplication.class, args);
+    }
+
+    @Bean
+    CommandLineRunner initAdminUser(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        return args -> {
+            String adminUsername = "admin";
+            // Check if admin user already exists
+            userRepository.findByUsername(adminUsername).orElseGet(() -> {
+                User admin = User.builder()
+                        .username(adminUsername)
+                        .password(passwordEncoder.encode("adminadmin")) // encode password
+                        .firstName("admin")
+                        .lastName("admin")
+                        .emailAddress("admin@gmail.com")
+                        .role(UserRole.ADMIN) // or your role setup
+                        .build();
+                System.out.println("Creating default admin user");
+                return userRepository.save(admin);
+            });
+        };
     }
 }

@@ -2,16 +2,20 @@ package com.conductor.core.model.org;
 
 import com.conductor.core.model.common.AccessLevel;
 import com.conductor.core.util.Option;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Defines the different privileges that an {@link Organization}
  * can grant to its operators. These privileges control access to
  * organization-level resources and operations.
  */
-public enum OrganizationPrivilege implements Option {
+public enum OrganizationPrivilege {
 
     /**
      * Grants access to creating and managing operators (users) for an organization.
@@ -59,37 +63,43 @@ public enum OrganizationPrivilege implements Option {
      */
     VIEW("view");
 
-    private String name;
-    OrganizationPrivilege(String name)
-    {
-        this.name = name;
-    };
+    private final String label;
 
-    @Override
-    public String getName(){
-        return this.name;
+    OrganizationPrivilege(String label) {
+        this.label = label;
     }
-//
-//    private static final Map<String, OrganizationPrivilege> LOOKUP =
-//            Stream.of(values()).collect(Collectors.toMap(OrganizationPrivilege::getName, r -> r));
-//
-//    /**
-//     * Resolves a resourceType from its string name.
-//     *
-//     * @param name the resourceType name
-//     * @return an Optional containing the matching ResourceType, or empty if not found
-//     */
-//    public static Optional<OrganizationPrivilege> fromName(String name) {
-//        return Optional.ofNullable(LOOKUP.get(name));
-//    }
+
+    @JsonValue
+    public String getLabel() {
+        return label;
+    }
+
+    @JsonCreator
+    public static OrganizationPrivilege fromValue(String value) {
+        for (OrganizationPrivilege privilege : values()) {
+            if (privilege.label.equalsIgnoreCase(value)) {
+                return privilege;
+            }
+        }
+        throw new IllegalArgumentException("Unknown organization privilege: " + value);
+    }
+
+    /**
+     * @return a comma-separated string of all organization privilege options
+     */
+    public static String getAllOptions() {
+        return Arrays.stream(OrganizationPrivilege.values())
+                .map(OrganizationPrivilege::getLabel)
+                .collect(Collectors.joining(", "));
+    }
 
     public static Map<String,String> getOwnerPrivileges(){
         Map<String, String> privileges = new HashMap<>();
 
-        privileges.put(EVENT.getName(), AccessLevel.WRITE.getName());
-        privileges.put(OPERATOR.getName(), AccessLevel.WRITE.getName());
-        privileges.put(CONFIG.getName(), AccessLevel.WRITE.getName());
-        privileges.put(AUDIT.getName(), AccessLevel.READ.getName());
+        privileges.put(EVENT.getLabel(), AccessLevel.WRITE.getLabel());
+        privileges.put(OPERATOR.getLabel(), AccessLevel.WRITE.getLabel());
+        privileges.put(CONFIG.getLabel(), AccessLevel.WRITE.getLabel());
+        privileges.put(AUDIT.getLabel(), AccessLevel.READ.getLabel());
 
         return privileges;
     }

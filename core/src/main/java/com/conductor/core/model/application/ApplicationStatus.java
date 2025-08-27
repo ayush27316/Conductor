@@ -1,6 +1,8 @@
 package com.conductor.core.model.application;
 
 import com.conductor.core.model.event.Event;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -35,38 +37,35 @@ public enum ApplicationStatus {
      */
     CANCELLED("cancelled");
 
-    private final String name;
+    private final String label;
 
-    ApplicationStatus(String name) {
-        this.name = name;
+    ApplicationStatus(String label) {
+        this.label = label;
     }
 
-    /**
-     * @return the string identifier of the reservation status
-     */
-    public String getName() {
-        return this.name;
+    @JsonValue
+    public String getLabel() {
+        return label;
     }
 
-    private static final Map<String, ApplicationStatus> LOOKUP =
-            Stream.of(values()).collect(Collectors.toMap(ApplicationStatus::getName, r -> r));
-
-    /**
-     * Resolves an EventReservationStatus from its string name.
-     *
-     * @param name the status name
-     * @return an Optional containing the matching EventReservationStatus, or empty if not found
-     */
-    public static Optional<ApplicationStatus> fromName(String name) {
-        return Optional.ofNullable(LOOKUP.get(name));
+    @JsonCreator
+    public static ApplicationStatus fromValue(String value) {
+        for (ApplicationStatus status : values()) {
+            if (status.label.equalsIgnoreCase(value)) {
+                return status;
+            }
+        }
+        throw new IllegalArgumentException("Unknown application status: " + value);
     }
+
+
 
     /**
      * @return a comma-separated string of all reservation status options
      */
     public static String getAllOptions() {
         return Arrays.stream(ApplicationStatus.values())
-                .map(ApplicationStatus::getName)
+                .map(ApplicationStatus::getLabel)
                 .collect(Collectors.joining(", "));
     }
 

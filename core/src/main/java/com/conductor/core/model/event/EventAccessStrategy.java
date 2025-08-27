@@ -1,6 +1,8 @@
 package com.conductor.core.model.event;
 
 import com.conductor.core.util.Option;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -13,7 +15,7 @@ import java.util.stream.Collectors;
  * temporal restrictions or first-come-first-served allocation.
  * </p>
  */
-public enum EventAccessStrategy implements Option {
+public enum EventAccessStrategy {
 
     /**
      * A participant is granted access only once.
@@ -53,19 +55,33 @@ public enum EventAccessStrategy implements Option {
      */
     FIRST_COME_FIRST_SERVED("first_come_first_served");
 
+    private final String label;
+
+    EventAccessStrategy(String label) {
+        this.label = label;
+    }
+
+    @JsonValue
+    public String getLabel() {
+        return label;
+    }
+
+    @JsonCreator
+    public static EventAccessStrategy fromValue(String value) {
+        for (EventAccessStrategy strategy : values()) {
+            if (strategy.label.equalsIgnoreCase(value)) {
+                return strategy;
+            }
+        }
+        throw new IllegalArgumentException("Unknown event access strategy: " + value);
+    }
+
     /**
-     * The string representation of the strategy,
-     * used for persistence and serialization.
+     * @return a comma-separated string of all event access strategy options
      */
-    private final String name;
-
-    EventAccessStrategy(String name) {
-        this.name = name;
+    public static String getAllOptions() {
+        return Arrays.stream(EventAccessStrategy.values())
+                .map(EventAccessStrategy::getLabel)
+                .collect(Collectors.joining(", "));
     }
-
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
 }

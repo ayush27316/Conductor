@@ -2,11 +2,16 @@ package com.conductor.core.model.user;
 
 import com.conductor.core.model.common.AccessLevel;
 import com.conductor.core.util.Option;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Represents the different categories of users that can interact with conductor.
  */
-public enum UserRole implements Option {
+public enum UserRole {
 
     /**
      * System administrator with 'WRITE' {@link AccessLevel}
@@ -38,31 +43,33 @@ public enum UserRole implements Option {
      */
     USER("USER");
 
-    private String name;
+    private final String label;
 
-
-    UserRole(String name){
-        this.name = name;
+    UserRole(String label) {
+        this.label = label;
     }
 
-    @Override
-    public String getName(){
-        return this.name;
+    @JsonValue
+    public String getLabel() {
+        return label;
     }
 
+    @JsonCreator
+    public static UserRole fromValue(String value) {
+        for (UserRole role : values()) {
+            if (role.label.equalsIgnoreCase(value)) {
+                return role;
+            }
+        }
+        throw new IllegalArgumentException("Unknown role: " + value);
+    }
 
-//    private static final Map<String, UserRole> LOOKUP =
-//            Stream.of(values()).collect(Collectors.toMap(UserRole::getName, r -> r));
-//
-//    /**
-//     * Resolves a user type from its string name.
-//     *
-//     * @param name the type name
-//     * @return an Optional containing the matching type, or empty if not found
-//     */
-//    public static Optional<UserRole> fromName(String name) {
-//        return Optional.ofNullable(LOOKUP.get(name));
-//    }
-//
-
+    /**
+     * @return a comma-separated string of all role options
+     */
+    public static String getAllOptions() {
+        return Arrays.stream(UserRole.values())
+                .map(UserRole::getLabel)
+                .collect(Collectors.joining(", "));
+    }
 }

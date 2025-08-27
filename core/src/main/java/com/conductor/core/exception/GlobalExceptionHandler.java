@@ -1,125 +1,105 @@
 package com.conductor.core.exception;
 
-import com.conductor.core.dto.ErrorDetails;
 import com.conductor.core.dto.ResponseDTO;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(InvalidServiceRequest.class)
-    public ResponseEntity<ResponseDTO<?>> handleInvalidServiceRequest(
+    public ResponseDTO<?> handleInvalidServiceRequest(
             InvalidServiceRequest ex, WebRequest request) {
 
-        ErrorDetails errorDetails = ErrorDetails.builder()
-                .code(HttpStatus.BAD_REQUEST.value())
-                .description(ex.getMessage())
+        return ResponseDTO.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .success(false)
+                .message("Invalid service request: " + ex.getMessage())
+                .description("Path: " + extractPath(request))
+                .timeStamp(LocalDateTime.now().toString())
                 .build();
-
-        ResponseDTO<?> response = ResponseDTO.badRequest(
-                extractPath(request),
-                "Invalid service request",
-                errorDetails
-        );
-
-        return ResponseEntity.badRequest().body(response);
     }
 
-    @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<ResponseDTO<?>> handleSecurityException(
-            SecurityException ex, WebRequest request) {
-
-        ErrorDetails errorDetails = ErrorDetails.builder()
-                .code(HttpStatus.UNAUTHORIZED.value())
-                .description(ex.getMessage())
-                .build();
-
-        ResponseDTO<?> response = ResponseDTO.unauthorized(
-                extractPath(request),
-                "Unauthorized access"
-        );
-        response.setErrorDetails(errorDetails);
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-    }
-
-    // Handle all other exceptions
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ResponseDTO<?>> handleGlobalException(
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler({SecurityException.class, TokenNotValidException.class})
+    public ResponseDTO<?> handleUnauthorizedExceptions(
             Exception ex, WebRequest request) {
 
-        ErrorDetails errorDetails = ErrorDetails.builder()
-                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .description(ex.getMessage())
+        String message = ex instanceof TokenNotValidException
+                ? "Token not valid: " + ex.getMessage()
+                : "Unauthorized access: " + ex.getMessage();
+
+        return ResponseDTO.builder()
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .success(false)
+                .message(message)
+                .description("Path: " + extractPath(request))
+                .timeStamp(LocalDateTime.now().toString())
                 .build();
-
-        ResponseDTO<?> response = ResponseDTO.error(
-                extractPath(request),
-                "An unexpected error occurred. Please try again later.",
-                errorDetails
-        );
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ResponseDTO<?>> handleValidationExceptions(
+    public ResponseDTO<?> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {
 
         List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .toList();
+                .collect(Collectors.toList());
 
-        ErrorDetails errorDetails = ErrorDetails.builder()
-                .code(HttpStatus.BAD_REQUEST.value())
-                .description(String.join(", ", errors))
+        return ResponseDTO.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .success(false)
+                .message("Validation failed")
+                .description(String.join(", ", errors) + " | Path: " + extractPath(request))
+                .timeStamp(LocalDateTime.now().toString())
                 .build();
-
-        ResponseDTO<?> response = ResponseDTO.badRequest(
-                extractPath(request),
-                "Validation failed",
-                errorDetails
-        );
-
-        return ResponseEntity.badRequest().body(response);
     }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ResponseDTO<?>> handleConstraintViolation(
+    public ResponseDTO<?> handleConstraintViolation(
             ConstraintViolationException ex, WebRequest request) {
 
-        Map<String, String> errors = new HashMap<>();
-        ex.getConstraintViolations().forEach(violation -> {
-            String fieldName = violation.getPropertyPath().toString();
-            String message = violation.getMessage();
-            errors.put(fieldName, message);
-        });
+        String errors = ex.getConstraintViolations()
+                .stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .collect(Collectors.joining(", "));
 
-        ErrorDetails errorDetails = ErrorDetails.builder()
-                .code(HttpStatus.BAD_REQUEST.value())
-                .description(errors.toString())
+        return ResponseDTO.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .success(false)
+                .message("Constraint violation")
+                .description(errors + " | Path: " + extractPath(request))
+                .timeStamp(LocalDateTime.now().toString())
                 .build();
+    }
 
-        ResponseDTO<?> response = ResponseDTO.badRequest(
-                extractPath(request),
-                "Constraint violation",
-                errorDetails
-        );
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseDTO<?> handleNoSuchElement(
+            NoSuchElementException ex, WebRequest request) {
 
-        return ResponseEntity.badRequest().body(response);
+        return ResponseDTO.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .success(false)
+                .message("Invalid request data")
+                .description("The requested value was not found: " + ex.getMessage() + " | Path: " + extractPath(request))
+                .timeStamp(LocalDateTime.now().toString())
+                .build();
     }
 
     private String extractPath(WebRequest request) {

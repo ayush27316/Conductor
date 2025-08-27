@@ -1,19 +1,18 @@
 package com.conductor.core.service;
 
 import com.conductor.core.dto.EventDTO;
-import com.conductor.core.dto.EventRegistrationRequest;
 import com.conductor.core.exception.EventRegistrationFailedException;
 import com.conductor.core.model.event.*;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.user.User;
-import com.conductor.core.util.EventMapper;
 import com.conductor.core.model.org.Organization;
 
 import com.conductor.core.repository.EventRepository;
 
 import com.conductor.core.repository.OrganizationRepository;
 import com.conductor.core.repository.UserRepository;
+import com.conductor.core.util.EventMapper;
 import com.conductor.core.util.OptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -32,15 +31,15 @@ public class EventService {
     private final EventRepository eventRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
-   // private final EventMapper eventMapper;
+    private final EventMapper eventMapper;
 
     @Transactional
-    public Boolean registerEvent(EventRegistrationRequest request) {
+    public Boolean registerEvent(EventDTO request) {
 
         List<Permission> permissions = getCurrentUser().getPermissions();
         Optional<Organization> org = Optional.empty();
         for(Permission p: permissions){
-            if(p.getResource().getResourceType().getName().equals(ResourceType.ORGANIZATION.getName()))
+            if(p.getResource().getResourceType().getLabel().equals(ResourceType.ORGANIZATION.getLabel()))
             {
                 org = Optional.of((Organization) p.getResource());
             }
@@ -50,30 +49,13 @@ public class EventService {
             throw new EventRegistrationFailedException("User must be associated with an organization to create events");
         }
 
-        Event event = toEntityFromRegistrationRequest(request);
+        Event event = eventMapper.toEntity(request);
 
         event.setOrganization(org.get());
         eventRepository.save(event);
 
         return true;
     }
-
-    private Event toEntityFromRegistrationRequest(EventRegistrationRequest request) {
-        return Event.builder()
-                .format(OptionUtil.fromName(EventFormat.class, request.getFormat()).get())
-                .name(request.getName())
-                .location(request.getLocation())
-                .begin(request.getBegin())
-                .end(request.getEnd())
-                .accessDetails(EventAccessDetails.builder()
-                        .accessStrategy(OptionUtil.fromName(EventAccessStrategy.class, request.getAccessStrategy()).get())
-                        .accessibleFrom(request.getAccessibleFrom())
-                        .accessibleTo(request.getAccessibleTo())
-                        .build())
-                .status(EventStatus.DRAFT)
-                .build();
-    }
-
 
     public User getCurrentUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -84,11 +66,11 @@ public class EventService {
         return  (User) authentication.getPrincipal();
     }
 
-//    public List<EventDTO> getAllEvents() {
-//
-//       return eventRepository.findAll().stream()
-//                .map(eventMapper::toDto)
-//                .collect(Collectors.toList());
-//    }
+    public List<EventDTO> getAllEvents() {
+
+       return eventRepository.findAll().stream()
+                .map(eventMapper::toDTO)
+                .collect(Collectors.toList());
+    }
 }
 

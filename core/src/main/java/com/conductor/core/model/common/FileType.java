@@ -1,39 +1,46 @@
 package com.conductor.core.model.common;
 
-import com.conductor.core.util.Option;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
- * Represents the supported file types within the system.
+ * Defines supported file types.
  */
-public enum FileType implements Option {
+public enum FileType {
 
     PDF("pdf"),
-
     PNG("png");
 
-    private final String name;
+    private final String label;
 
-    FileType(String name) {
-        this.name = name;
+    FileType(String label) {
+        this.label = label;
+    }
+
+    @JsonValue
+    public String getLabel() {
+        return label;
+    }
+
+    @JsonCreator
+    public static FileType fromValue(String value) {
+        for (FileType type : values()) {
+            if (type.label.equalsIgnoreCase(value)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("Unknown file type: " + value);
     }
 
     /**
-     * Returns the lowercase name of the file type.
+     * @return a comma-separated string of all file type options
      */
-    @Override
-    public String getName() {
-        return this.name;
+    public static String getAllOptions() {
+        return Arrays.stream(FileType.values())
+                .map(FileType::getLabel)
+                .collect(Collectors.joining(", "));
     }
-
-//    /**
-//     * Returns a comma-separated list of all file type options.
-//     */
-//    public static String getAllOptions() {
-//        return Arrays.stream(FileType.values())
-//                .map(FileType::getName)
-//                .collect(Collectors.joining(", "));
-//    }
 }
