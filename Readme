@@ -1,17 +1,11 @@
-Conductor
+Conductor is an Event management system.
 
-create events and distribute tickets
-conductor follows hexagonal architecture where it exposes
-interfaces for external services like payments.
-
-conductor is built on a reactive core. if a ticket generation is
-requested it forwards the payment request to payment service asynchronously
-meanwhile payment request is getting completed conductor can serve other requests
-like event details/metrics.
-
+create events and distribute tickets. 
 
 Core:
-Main domain model and logic
+
+conductor follows hexagonal architecture where it exposes
+interfaces for external services like payments.
 
 Ports:
 Exposes interfaces that can be implemented to support additional services
