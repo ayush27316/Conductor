@@ -11,7 +11,6 @@ import com.conductor.core.model.org.OrganizationPrivilege;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.user.UserRole;
-import com.conductor.core.util.OrganizationMapper;
 import com.conductor.core.model.org.Organization;
 import com.conductor.core.model.org.OrganizationAudit;
 import com.conductor.core.model.user.User;
@@ -97,7 +96,7 @@ public class OrganizationRegistrationService {
                     .build();
 
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             throw new OrganizationRegistrationException("Organization registration failed." + e.getMessage(), e);
         }
     }

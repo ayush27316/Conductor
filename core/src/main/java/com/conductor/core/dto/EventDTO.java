@@ -22,6 +22,8 @@ import jakarta.validation.constraints.*;
 @Schema(description = "Request DTO for registering an event")
 public class EventDTO {
 
+    private String id;
+
     @NotBlank(message = "Event name is required")
     @Size(max = 100, message = "Event name cannot exceed 100 characters")
     @Schema(description = "Name of the event", example = "Tech Conference 2025")

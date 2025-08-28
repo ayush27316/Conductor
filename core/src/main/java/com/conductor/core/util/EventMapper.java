@@ -27,6 +27,7 @@ public class EventMapper {
 
     public EventDTO toDTO(Event event) {
         return EventDTO.builder()
+                .id(event.getExternalId())
                 .name(event.getName())
                 .format(event.getFormat())
                 .location(event.getLocation())

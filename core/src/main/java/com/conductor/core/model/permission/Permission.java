@@ -1,7 +1,9 @@
 package com.conductor.core.model.permission;
 
+import com.conductor.core.model.common.AccessLevel;
 import com.conductor.core.model.common.BaseEntity;
 import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.event.EventPrivilege;
 import com.conductor.core.model.user.User;
 import com.conductor.core.util.PermissionMapConverter;
 import com.fasterxml.jackson.annotation.JsonBackReference;
