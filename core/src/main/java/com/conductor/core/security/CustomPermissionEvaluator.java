@@ -61,6 +61,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         if (!(permission instanceof Map<?, ?> permMap)) {
             throw new IllegalArgumentException("permission must be a Map<String, String>");
         }
+
         @SuppressWarnings("unchecked")
         Map<String, String> requiredPermission = (Map<String, String>) permMap;
 

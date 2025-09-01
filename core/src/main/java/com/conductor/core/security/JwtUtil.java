@@ -4,6 +4,7 @@ import com.conductor.core.dto.permission.PermissionDTO;
 import com.conductor.core.model.common.Option;
 import com.conductor.core.model.user.User;
 import com.conductor.core.model.user.UserRole;
+import com.conductor.core.util.PermissionMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
@@ -39,7 +40,7 @@ public class JwtUtil {
     public String generateAccessToken(User user) {
         try {
 
-            String permissionsJson = objectMapper.writeValueAsString(user.getPermissions());
+            String permissionsJson = objectMapper.writeValueAsString(PermissionMapper.toPermissionDTOs(user.getPermissions()));
 
             return Jwts.builder()
                     .subject(user.getUsername())

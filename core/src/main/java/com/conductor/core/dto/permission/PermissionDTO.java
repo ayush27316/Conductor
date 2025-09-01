@@ -15,9 +15,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class PermissionDTO {
 
-
-    @JsonProperty("user_id")
-    private String userExternalId;
     @JsonProperty("resource_name")
     private String resourceName;
     @JsonProperty("resource_id")

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -30,6 +31,22 @@ public class GlobalExceptionHandler {
                 .timeStamp(LocalDateTime.now().toString())
                 .build();
     }
+
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseDTO<?> handleInvalidServiceRequest(
+            AccessDeniedException ex, WebRequest request) {
+
+        return ResponseDTO.builder()
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .success(false)
+                .message("Invalid service request: " + ex.getMessage())
+                .description("Path: " + extractPath(request))
+                .timeStamp(LocalDateTime.now().toString())
+                .build();
+    }
+
 
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler({SecurityException.class, TokenNotValidException.class})

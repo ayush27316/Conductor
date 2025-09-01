@@ -1,8 +1,10 @@
 package com.conductor.core.model.common;
 
+import com.conductor.core.model.permission.Privilege;
 import jakarta.persistence.*;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -62,5 +64,10 @@ public abstract class Resource extends BaseEntity {
     {
         return this.externalGuid;
     }
-
+//
+//    //safeCast
+//    static <E extends Resource> Optional<E> safeCast(Class<E> targetResource, Resource source) {
+//        return source;
+//    }
+//
 }

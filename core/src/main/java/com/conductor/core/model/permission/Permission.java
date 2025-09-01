@@ -7,19 +7,17 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Type;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Represents a single permission grant for a user on a specific resourceType.
  *
- * Who can change a users permission. Firs thing is that only operators
+ * Who can change a users' permission. Firs thing is that only operators
  * have persmissions.
  */
 @Entity
@@ -41,25 +39,15 @@ public class Permission extends BaseEntity {
     @JsonBackReference
     private User user;
 
-
     @ManyToOne
     @JoinColumn(name = "resource_id_fk", nullable = false)
     private Resource resource;
 
-    /**
-     * Map of privileges to access levels for this resourceType
-     * Key: privilege name, Value: access level
-     */
-    //the tagetResourceType must be set otherwise converter will fail
-    @Embedded
-    @Lob
-    @Column(name = "permissions", columnDefinition = "CLOB")
+    @Getter(value = lombok.AccessLevel.NONE)
+    @Setter(value = lombok.AccessLevel.NONE)
     @Convert(converter = PermissionConverter.class)
-    private PermissionMap permissionMap;
-
-//    @Convert(converter = PermissionConverter.class)
-//    @Column(name = "privileges", columnDefinition = "CLOB")
-//    private Map<Privilege, AccessLevel> permission;
+    @Column(name = "privileges", columnDefinition = "CLOB")
+    private Map<Privilege, AccessLevel> permission = new HashMap<>();
 
     @Column(name = "granted_at", nullable = true)
     private ZonedDateTime grantedAt;
@@ -70,5 +58,22 @@ public class Permission extends BaseEntity {
 
     @Column(name = "expires_at")
     private ZonedDateTime expiresAt;
+
+
+    /**
+     *
+     * @return An immutable reference to Permissions map. To change the permission
+     * you must use {@code setPermission(...)} method which replaces the existing map
+     * with the provided map.
+     */
+    public Map<Privilege, AccessLevel> getPermission(){
+        return permission.isEmpty() ? Map.copyOf(permission): null;
+    }
+
+    public void setPermission(Map<Privilege, AccessLevel> newPermission){
+         if(newPermission != null){
+             permission = newPermission;
+         }
+    }
 
 }

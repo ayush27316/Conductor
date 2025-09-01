@@ -5,6 +5,7 @@ import com.conductor.core.model.permission.Permission;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for mapping permissions between different formats
@@ -19,16 +20,23 @@ public class PermissionMapper {
         if (permissions == null) return List.of();
         return permissions.stream()
                 .map(p -> PermissionDTO.builder()
-                        .userExternalId(p.getUser().getExternalId().toString())
-//                        .resourceName(p.getResourceName())
-//                        .resourceId(p.getResourceId())
-                       // .permissions(p.getPrivileges())
+                        .resourceName(p.getResource().getResourceType().getName())
+                        .resourceId(p.getResource().getExternalId())
+                        .permissions(
+                                p.getPermission().entrySet()
+                                        .stream()
+                                        .collect(Collectors.toMap(
+                                                e -> e.getKey().getName(),   // privilege name
+                                                e -> e.getValue().getName() // access level name
+                                        ))
+                        )
                         .grantedAt(p.getGrantedAt())
-                        .grantedByUserExternalId(p.getGrantedBy().getExternalId().toString())
+                       // .grantedByUserExternalId(p.getGrantedBy().getExternalId().toString())
                         .expiresAt(p.getExpiresAt())
                         .build())
                 .toList();
     }
+
 
 }
 

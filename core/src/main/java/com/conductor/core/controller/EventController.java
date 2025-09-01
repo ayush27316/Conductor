@@ -20,7 +20,7 @@ public class EventController {
 
     private final EventService eventService;
 
-    @PreAuthorize("hasPermission(##request.organizationId, 'organization', {'event': 'write'})")
+    @PreAuthorize("hasPermission(#request.organizationId, 'organization', {'event': 'write'})")
     @PostMapping("/register")
     public ResponseDTO<?> registerEvent(
             @Valid @RequestBody EventDTO request) {
