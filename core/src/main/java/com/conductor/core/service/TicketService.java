@@ -45,9 +45,9 @@ public class TicketService {
         ticketRepository.save(ticket);
 
         return TicketDTO.builder()
-                .eventExternalId(event.getExternalId())
+                .eventExternalId(event.getExternalId().toString())
                 .ownerUsername(user.getUsername())
-                .code(ticket.getExternalId()).
+                .code(ticket.getExternalId().toString()).
                 build();
     }
 

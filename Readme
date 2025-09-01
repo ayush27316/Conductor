@@ -9,7 +9,6 @@ requested it forwards the payment request to payment service asynchronously
 meanwhile payment request is getting completed conductor can serve other requests
 like event details/metrics.
 
-
 Core:
 Main domain model and logic
 
@@ -24,3 +23,4 @@ implmentaions of ports. Adpaters adds Ports as dependencies with a scope "provid
 Core depends on ports and adapters. Adpaters provide implementaions of ports as spring beans
 which are scanned and injected into the core. So implementaion of ports must be annoted using
 @Component.
+

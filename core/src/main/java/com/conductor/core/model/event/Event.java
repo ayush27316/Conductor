@@ -1,6 +1,5 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.model.common.File;
 import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.org.Organization;
@@ -20,10 +19,6 @@ import java.util.*;
 @Builder
 @Table(name = "events")
 public class Event extends Resource {
-
-    @Column(name = "external_id", nullable = false, updatable = false, unique = true)
-    @Builder.Default
-    private String externalId = UUID.randomUUID().toString();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -51,6 +46,9 @@ public class Event extends Resource {
     @Embedded
     private EventAccessDetails accessDetails;
 
+    @Embedded
+    private EventPaymentDetails paymentDetails;
+
     @Column(name = "options")
     @Builder.Default
     private List<EventOption> options = new ArrayList<>();
@@ -72,9 +70,6 @@ public class Event extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.setResourceType(ResourceType.EVENT);
-        if (externalId == null) {
-            externalId = UUID.randomUUID().toString();
-        }
+        super.init(ResourceType.EVENT);
     }
 }

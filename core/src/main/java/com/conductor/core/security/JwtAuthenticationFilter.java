@@ -19,6 +19,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -64,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     //String userRole = jwtUtil.getUserRole(token);
 
                     if (userExternalId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        User userPrincipal = userRepository.findByExternalId(userExternalId).get();
+                        User userPrincipal = userRepository.findByExternalGuid(userExternalId).get();
 
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(

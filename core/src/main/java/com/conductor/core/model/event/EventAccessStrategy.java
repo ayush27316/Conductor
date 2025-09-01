@@ -1,11 +1,6 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.util.Option;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import com.conductor.core.model.common.Option;
 
 /**
  * Defines the possible access control strategies for an {@link Event}.
@@ -15,7 +10,7 @@ import java.util.stream.Collectors;
  * temporal restrictions or first-come-first-served allocation.
  * </p>
  */
-public enum EventAccessStrategy {
+public enum EventAccessStrategy implements Option {
 
     /**
      * A participant is granted access only once.
@@ -55,33 +50,14 @@ public enum EventAccessStrategy {
      */
     FIRST_COME_FIRST_SERVED("first_come_first_served");
 
-    private final String label;
+    private final String name;
 
-    EventAccessStrategy(String label) {
-        this.label = label;
+    EventAccessStrategy(String name) {
+        this.name = name;
     }
 
-    @JsonValue
-    public String getLabel() {
-        return label;
-    }
-
-    @JsonCreator
-    public static EventAccessStrategy fromValue(String value) {
-        for (EventAccessStrategy strategy : values()) {
-            if (strategy.label.equalsIgnoreCase(value)) {
-                return strategy;
-            }
-        }
-        throw new IllegalArgumentException("Unknown event access strategy: " + value);
-    }
-
-    /**
-     * @return a comma-separated string of all event access strategy options
-     */
-    public static String getAllOptions() {
-        return Arrays.stream(EventAccessStrategy.values())
-                .map(EventAccessStrategy::getLabel)
-                .collect(Collectors.joining(", "));
+    @Override
+    public String getName() {
+        return this.name;
     }
 }

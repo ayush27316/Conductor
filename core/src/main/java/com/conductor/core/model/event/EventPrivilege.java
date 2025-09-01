@@ -1,12 +1,7 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.model.common.AccessLevel;
-import com.conductor.core.util.Option;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.permission.Privilege;
 
 /**
  * Defines the different privileges that can be granted within an {@link Event}.
@@ -16,7 +11,7 @@ import java.util.stream.Collectors;
  * to create events, but event-specific privileges control what can be done
  * within each individual event.
  */
-public enum EventPrivilege  {
+public enum EventPrivilege implements Privilege {
 
     /**
      * Represents event operators that might facilitate check-ins, ticket approval etc.
@@ -64,33 +59,15 @@ public enum EventPrivilege  {
     VIEW("view");
 
 
-    private final String label;
+    private final String name;
 
-    EventPrivilege(String label) {
-        this.label = label;
+    EventPrivilege(String name) {
+        this.name = name;
     }
 
-    @JsonValue
-    public String getLabel() {
-        return label;
-    }
 
-    @JsonCreator
-    public static EventPrivilege fromValue(String value) {
-        for (EventPrivilege privilege : values()) {
-            if (privilege.label.equalsIgnoreCase(value)) {
-                return privilege;
-            }
-        }
-        throw new IllegalArgumentException("Unknown event privilege: " + value);
-    }
-
-    /**
-     * @return a comma-separated string of all event privilege options
-     */
-    public static String getAllOptions() {
-        return Arrays.stream(EventPrivilege.values())
-                .map(EventPrivilege::getLabel)
-                .collect(Collectors.joining(", "));
+    @Override
+    public String getName() {
+        return this.name;
     }
 }

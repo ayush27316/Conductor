@@ -26,10 +26,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Ticket extends Resource {
 
-    @Column(name="external_id", unique = true, updatable = false, nullable = false)
-    @Builder.Default
-    private String externalId = UUID.randomUUID().toString();
-
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id_fk", nullable = false)
     private User user;
@@ -44,9 +40,6 @@ public class Ticket extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.setResourceType(ResourceType.TICKET);
-        if (externalId == null) {
-            externalId = UUID.randomUUID().toString();
-        }
+        super.init(ResourceType.TICKET);
     }
 }

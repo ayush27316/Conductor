@@ -34,10 +34,6 @@ public class User extends Resource implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    @Builder.Default
-    @Column(name="external_id", unique = true, nullable = false)
-    private String externalId = UUID.randomUUID().toString();
-
     @Column(name = "username", nullable = false, updatable = false, unique = true, length = 50)
     private String username;
 
@@ -61,7 +57,7 @@ public class User extends Resource implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getLabel()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getName()));
     }
 
     @Override
@@ -86,9 +82,7 @@ public class User extends Resource implements UserDetails {
 
     @PrePersist
     public void prePersist() {
-        super.setResourceType(ResourceType.USER);
-        if (externalId == null) {
-            externalId = UUID.randomUUID().toString();
-        }
+        super.init(ResourceType.USER);
+
     }
 }

@@ -1,11 +1,6 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.util.Option;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import com.conductor.core.model.common.Option;
 
 /**
  * Represents the lifecycle status of an {@link Event}.
@@ -14,7 +9,7 @@ import java.util.stream.Collectors;
  * creation, execution, and closure.
  * </p>
  */
-public enum EventStatus {
+public enum EventStatus implements Option {
     /**
      * The event has been created but not yet started/live.
      */
@@ -36,33 +31,14 @@ public enum EventStatus {
     CANCELLED("cancelled");
 
 
-    private final String label;
+    private final String name;
 
-    EventStatus(String label) {
-        this.label = label;
+    EventStatus(String name) {
+        this.name = name;
     }
 
-    @JsonValue
-    public String getLabel() {
-        return label;
-    }
-
-    @JsonCreator
-    public static EventStatus fromValue(String value) {
-        for (EventStatus status : values()) {
-            if (status.label.equalsIgnoreCase(value)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Unknown event status: " + value);
-    }
-
-    /**
-     * @return a comma-separated string of all event status options
-     */
-    public static String getAllOptions() {
-        return Arrays.stream(EventStatus.values())
-                .map(EventStatus::getLabel)
-                .collect(Collectors.joining(", "));
+    @Override
+    public String getName() {
+        return this.name;
     }
 }

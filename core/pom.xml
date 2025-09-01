@@ -24,6 +24,7 @@
             <version>${project.version}</version>
         </dependency>
 
+
         <dependency>
             <groupId>com.conductor</groupId>
             <artifactId>adapters</artifactId>

@@ -1,27 +1,32 @@
 package com.conductor.core.model.permission;
 
-import com.conductor.core.model.common.AccessLevel;
 import com.conductor.core.model.common.BaseEntity;
 import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.event.EventPrivilege;
 import com.conductor.core.model.user.User;
-import com.conductor.core.util.PermissionMapConverter;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Type;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
 
 /**
  * Represents a single permission grant for a user on a specific resourceType.
- * This is the atomic unit of permission in the system.
+ *
+ * Who can change a users permission. Firs thing is that only operators
+ * have persmissions.
  */
 @Entity
-@Table(name = "user_permissions")
+@Table(name = "user_permissions",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"user_id_fk", "resource_id_fk"})
+        })
 @Data
 @Builder
 @NoArgsConstructor
@@ -32,7 +37,7 @@ public class Permission extends BaseEntity {
      * The user this permission is granted to
      */
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id_fk", nullable = false)
     @JsonBackReference
     private User user;
 
@@ -45,9 +50,16 @@ public class Permission extends BaseEntity {
      * Map of privileges to access levels for this resourceType
      * Key: privilege name, Value: access level
      */
-    @Convert(converter = PermissionMapConverter.class)
-    @Column(name = "privileges", columnDefinition = "JSON")
-    private Map<String, String> privileges;
+    //the tagetResourceType must be set otherwise converter will fail
+    @Embedded
+    @Lob
+    @Column(name = "permissions", columnDefinition = "CLOB")
+    @Convert(converter = PermissionConverter.class)
+    private PermissionMap permissionMap;
+
+//    @Convert(converter = PermissionConverter.class)
+//    @Column(name = "privileges", columnDefinition = "CLOB")
+//    private Map<Privilege, AccessLevel> permission;
 
     @Column(name = "granted_at", nullable = true)
     private ZonedDateTime grantedAt;

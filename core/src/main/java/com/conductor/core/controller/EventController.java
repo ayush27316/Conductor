@@ -6,7 +6,6 @@ import com.conductor.core.exception.EventRegistrationFailedException;
 import com.conductor.core.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +20,7 @@ public class EventController {
 
     private final EventService eventService;
 
-    //OPERATOR, 'ORGANIZATION', null, {EVENT:'write'})
-    @PreAuthorize("hasRole('OPERATOR')")
+    @PreAuthorize("hasPermission(##request.organizationId, 'organization', {'event': 'write'})")
     @PostMapping("/register")
     public ResponseDTO<?> registerEvent(
             @Valid @RequestBody EventDTO request) {

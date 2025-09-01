@@ -1,21 +1,66 @@
 package com.conductor.core.model.common;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+
+import java.util.Objects;
+import java.util.UUID;
 
 
 /**
- * A common wrapper for all resources within the system.
+ * A {@link Resource} is an entity for which {@link com.conductor.core.model.permission.Permission}
+ * can be granted to a {@link com.conductor.core.model.user.User}.
  */
-@Getter
-@Setter
+
 @Entity
+@Table(
+        indexes = {
+                @Index(name = "idx_resource_guid", columnList = "external_guid")
+        }
+)
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Resource extends BaseEntity {
 
-    @Column(name = "resource_type", nullable = false)
+    /**
+     * {@code externalGuid} is meant to be used as a globally unique reference
+     * to this resource.
+     */
+    @Column(name = "external_guid",
+            unique = true,
+            updatable = false,
+            nullable = false)
+    private String externalGuid;
+
+    @Column(name = "resource_type",
+            updatable = false,
+            nullable = false)
     @Enumerated(EnumType.STRING)
     private ResourceType resourceType;
+
+    /**
+     * Each resource entity that extends {@link Resource}  must call {@code super.init}
+     * with appropriate resource type before persisting. This also sets a globally unique id that
+     * should be used to refer to this resource.
+     *
+     */
+    public void init(ResourceType resourceType){
+        if(Objects.isNull(externalGuid)){
+            externalGuid = UUID.randomUUID().toString();
+        }
+
+        this.resourceType = resourceType;
+    }
+
+    public ResourceType getResourceType()
+    {
+        return this.resourceType;
+    }
+
+    /**
+     * @return a globally unique id that can be used to refer to this resource.
+     */
+    public String getExternalId()
+    {
+        return this.externalGuid;
+    }
 
 }

@@ -1,7 +1,7 @@
 package com.conductor.core.model.org;
 
-import com.conductor.core.model.common.AccessLevel;
-import com.conductor.core.util.Option;
+import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.permission.Privilege;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * can grant to its operators. These privileges control access to
  * organization-level resources and operations.
  */
-public enum OrganizationPrivilege {
+public enum OrganizationPrivilege implements Privilege {
 
     /**
      * Grants access to creating and managing operators (users) for an organization.
@@ -63,45 +63,14 @@ public enum OrganizationPrivilege {
      */
     VIEW("view");
 
-    private final String label;
+    private final String name;
 
-    OrganizationPrivilege(String label) {
-        this.label = label;
+    OrganizationPrivilege(String name) {
+        this.name = name;
     }
 
-    @JsonValue
-    public String getLabel() {
-        return label;
+    @Override
+    public String getName() {
+        return this.name;
     }
-
-    @JsonCreator
-    public static OrganizationPrivilege fromValue(String value) {
-        for (OrganizationPrivilege privilege : values()) {
-            if (privilege.label.equalsIgnoreCase(value)) {
-                return privilege;
-            }
-        }
-        throw new IllegalArgumentException("Unknown organization privilege: " + value);
-    }
-
-    /**
-     * @return a comma-separated string of all organization privilege options
-     */
-    public static String getAllOptions() {
-        return Arrays.stream(OrganizationPrivilege.values())
-                .map(OrganizationPrivilege::getLabel)
-                .collect(Collectors.joining(", "));
-    }
-
-    public static Map<String,String> getOwnerPrivileges(){
-        Map<String, String> privileges = new HashMap<>();
-
-        privileges.put(EVENT.getLabel(), AccessLevel.WRITE.getLabel());
-        privileges.put(OPERATOR.getLabel(), AccessLevel.WRITE.getLabel());
-        privileges.put(CONFIG.getLabel(), AccessLevel.WRITE.getLabel());
-        privileges.put(AUDIT.getLabel(), AccessLevel.READ.getLabel());
-
-        return privileges;
-    }
-
 }

@@ -8,8 +8,10 @@ import com.conductor.core.exception.OrganizationRegistrationException;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.application.ApplicationStatus;
 import com.conductor.core.model.org.OrganizationPrivilege;
+import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.permission.Privilege;
 import com.conductor.core.model.user.UserRole;
 import com.conductor.core.model.org.Organization;
 import com.conductor.core.model.org.OrganizationAudit;
@@ -157,15 +159,13 @@ public class OrganizationRegistrationService {
     private void initiateOrganizationOnboarding(Organization org){
         OrganizationAudit audit = OrganizationAudit.getBlankAudit(org);
 
-        Map<String, String> privileges = OrganizationPrivilege.getOwnerPrivileges();
-
         Permission permission = Permission.builder()
                 .resource(org)
-                .privileges(privileges).build();
+                .permission(Organization.getOwnerPermission()).build();
 
         organizationRepository.save(org);
         auditRepository.save(audit);
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
         User user = User.builder()
                 .role(UserRole.OPERATOR)
                 .username(org.getName())

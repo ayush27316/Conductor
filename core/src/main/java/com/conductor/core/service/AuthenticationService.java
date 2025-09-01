@@ -53,7 +53,7 @@ public class AuthenticationService {
         
         userRepository.save(user);
 
-        return new SignUpResponseDTO(user.getExternalId(), "User signup successful");
+        return new SignUpResponseDTO(user.getExternalId().toString(), "User signup successful");
     }
 }
 

@@ -1,12 +1,18 @@
 package com.conductor.core.security;
 
+import com.conductor.core.model.common.Option;
+import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.permission.Permission;
+import com.conductor.core.model.permission.Privilege;
 import com.conductor.core.model.user.User;
+import com.conductor.core.util.Pair;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class CustomPermissionEvaluator implements PermissionEvaluator {
 
@@ -44,25 +50,102 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
     @Override
     public boolean hasPermission(Authentication auth, Serializable targetId, String targetType, Object permission) {
-        // This overload can be used for resourceType-specific permissions
-        if (auth == null || !auth.isAuthenticated()) {
-            return false;
-        }
-
         User userPrincipal = (User) auth.getPrincipal();
+        String externalId = (String) targetId;
 
-        if (targetType != null && !targetType.equals(userPrincipal.getRole())) {
-            return false;
+        Optional<ResourceType> resourceType = Option.fromName(ResourceType.class, targetType);
+        if (resourceType.isEmpty()) {
+            throw new IllegalArgumentException("resource type not found: " + targetType);
         }
 
-        List<Permission> requiredPermissions = (List<Permission>) permission;
-
-        if (requiredPermissions != null && !requiredPermissions.isEmpty()) {
-            return hasAllRequiredPermissions(userPrincipal.getPermissions(), requiredPermissions);
+        if (!(permission instanceof Map<?, ?> permMap)) {
+            throw new IllegalArgumentException("permission must be a Map<String, String>");
         }
+        @SuppressWarnings("unchecked")
+        Map<String, String> requiredPermission = (Map<String, String>) permMap;
 
-        return true;
+        for (Permission p : userPrincipal.getPermissions()) {
+            if (p.getResource() != null && externalId.equals(String.valueOf(p.getResource().getExternalId()))) {
+                Map<Privilege, AccessLevel> userPermission = p.getPermission();
+                if (userPermission == null) continue;
+
+                boolean allMatched = true;
+                for (Map.Entry<String, String> required : requiredPermission.entrySet()) {
+                    boolean matched = userPermission.entrySet().stream()
+                            .anyMatch(e -> e.getKey().getName().equals(required.getKey())
+                                    && e.getValue().getName().equals(required.getValue()));
+
+                    if (!matched) {
+                        allMatched = false;
+                        break;
+                    }
+                }
+                return allMatched; // found resource → return immediately
+            }
+        }
+        return false; // no matching resource found
     }
+
+//
+//    @Override
+//    public boolean hasPermission(Authentication auth, Serializable targetId, String targetType, Object permission) {
+//
+//        User userPrincipal = (User) auth.getPrincipal();
+//
+//        String externalId = (String) targetId;
+//
+//        Optional<ResourceType> resourceType = Option.fromName(ResourceType.class, targetType);
+//
+//        if(resourceType.isEmpty())
+//        {
+//            throw new IllegalArgumentException("resource type not found: " + targetType);
+//
+//        }
+//
+//        @SuppressWarnings("unchecked")
+//        Map<String, String> requiredPermission = (Map<String, String>) permission;
+//
+//        //extract permissions for this resource form auth
+//        List<Permission> userPermissions = userPrincipal.getPermissions();
+//
+//        boolean userHasAccessToResource  = false;
+//        boolean userHasRequiredPermission = true;
+//
+//        for(Permission p: userPermissions){
+//            if(externalId.equals(p.getResource().getExternalId().toString()))
+//            {
+//                Map<Privilege, AccessLevel> userPermission = p.getPermission();
+//
+//
+//                for(String key: requiredPermission.keySet())
+//                {
+//                    boolean permissionMatched = false;
+//
+//                    for(Privilege privilege : userPermission.keySet())
+//                    {
+//                        if(privilege.getName().equals(key))
+//                        {
+//                            if(userPermission.get(privilege).getName().equals(requiredPermission.get(key)))
+//                            {
+//                                   permissionMatched = true;
+//                            }
+//                        }
+//                    }
+//
+//                    if(permissionMatched == false)
+//                    {
+//                        userHasRequiredPermission = false;
+//                        break;
+//                    }
+//                }
+//                userHasAccessToResource = true;
+//                break;
+//            }
+//
+//        }
+//
+//        return userHasRequiredPermission && userHasAccessToResource;
+//    }
 
     /**
      * Check if user has all required permissions
@@ -129,7 +212,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
             String userAccessLevel = userPrivileges.get(privilege);
 
             if (userAccessLevel == null) {
-                return false; // User doesn't have this privilege at all
+                return false; // User doesn'clause have this privilege at all
             }
 
             // Compare access levels - you may need to implement access level hierarchy

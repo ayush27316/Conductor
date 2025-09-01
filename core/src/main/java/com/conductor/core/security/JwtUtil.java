@@ -1,18 +1,14 @@
 package com.conductor.core.security;
 
 import com.conductor.core.dto.permission.PermissionDTO;
+import com.conductor.core.model.common.Option;
 import com.conductor.core.model.user.User;
 import com.conductor.core.model.user.UserRole;
-import com.conductor.core.util.OptionUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -49,7 +45,7 @@ public class JwtUtil {
                     .subject(user.getUsername())
                     .claim("user_external_id", user.getExternalId())
                     .claim("permissions", permissionsJson)
-                    .claim("user_role", user.getRole().getLabel())
+                    .claim("user_role", user.getRole().getName())
                     .issuedAt(new Date())
                     .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
                     .signWith(getSecretKey())
@@ -119,7 +115,7 @@ public class JwtUtil {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            return UserRole.fromValue(claims.get("user_role", String.class));
+            return Option.fromName(UserRole.class, claims.get("user_role", String.class)).get();
         } catch (Exception e) {
             log.error("Error extracting externalId from JWT: {}", e.getMessage(), e);
             throw new RuntimeException("Error extracting externalId", e);

@@ -3,7 +3,6 @@ package com.conductor.core.dto;
 import com.conductor.core.model.event.EventAccessStrategy;
 import com.conductor.core.model.event.EventFormat;
 import com.conductor.core.model.event.EventOption;
-import com.conductor.core.util.EnumValue;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -23,6 +22,8 @@ import jakarta.validation.constraints.*;
 public class EventDTO {
 
     private String id;
+
+    private String organizationId;
 
     @NotBlank(message = "Event name is required")
     @Size(max = 100, message = "Event name cannot exceed 100 characters")

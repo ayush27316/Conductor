@@ -19,12 +19,12 @@ public class PermissionMapper {
         if (permissions == null) return List.of();
         return permissions.stream()
                 .map(p -> PermissionDTO.builder()
-                        .userExternalId(p.getUser().getExternalId())
+                        .userExternalId(p.getUser().getExternalId().toString())
 //                        .resourceName(p.getResourceName())
 //                        .resourceId(p.getResourceId())
-                        .permissions(p.getPrivileges())
+                       // .permissions(p.getPrivileges())
                         .grantedAt(p.getGrantedAt())
-                        .grantedByUserExternalId(p.getGrantedBy().getExternalId())
+                        .grantedByUserExternalId(p.getGrantedBy().getExternalId().toString())
                         .expiresAt(p.getExpiresAt())
                         .build())
                 .toList();

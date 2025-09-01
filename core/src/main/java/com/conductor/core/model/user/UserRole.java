@@ -1,17 +1,12 @@
 package com.conductor.core.model.user;
 
-import com.conductor.core.model.common.AccessLevel;
-import com.conductor.core.util.Option;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import com.conductor.core.model.common.Option;
+import com.conductor.core.model.permission.AccessLevel;
 
 /**
  * Represents the different categories of users that can interact with conductor.
  */
-public enum UserRole {
+public enum UserRole implements Option {
 
     /**
      * System administrator with 'WRITE' {@link AccessLevel}
@@ -43,33 +38,15 @@ public enum UserRole {
      */
     USER("USER");
 
-    private final String label;
+    private final String name;
 
-    UserRole(String label) {
-        this.label = label;
+    UserRole(String name) {
+        this.name = name;
     }
 
-    @JsonValue
-    public String getLabel() {
-        return label;
-    }
 
-    @JsonCreator
-    public static UserRole fromValue(String value) {
-        for (UserRole role : values()) {
-            if (role.label.equalsIgnoreCase(value)) {
-                return role;
-            }
-        }
-        throw new IllegalArgumentException("Unknown role: " + value);
-    }
-
-    /**
-     * @return a comma-separated string of all role options
-     */
-    public static String getAllOptions() {
-        return Arrays.stream(UserRole.values())
-                .map(UserRole::getLabel)
-                .collect(Collectors.joining(", "));
+    @Override
+    public String getName() {
+        return this.name;
     }
 }

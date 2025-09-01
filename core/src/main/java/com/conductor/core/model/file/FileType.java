@@ -1,4 +1,4 @@
-package com.conductor.core.model.common;
+package com.conductor.core.model.file;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;

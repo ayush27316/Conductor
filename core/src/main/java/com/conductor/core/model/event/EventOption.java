@@ -1,21 +1,13 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.util.Option;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.conductor.core.model.common.Option;
 
 /**
  * Defines configurable options for {@link Event}.
  * These options control ticket distribution, approval flows,
  * and payment strategies within an event.
  */
-public enum EventOption{
+public enum EventOption implements Option {
 
     /**
      * Tickets can only be distributed before the event starts.
@@ -53,33 +45,14 @@ public enum EventOption{
      */
     REQUIRES_PAYMENT_POST_APPROVAL("requires_payment_post_approval");
 
-    private final String label;
+    private final String name;
 
-    EventOption(String label) {
-        this.label = label;
+    EventOption(String name) {
+        this.name = name;
     }
 
-    @JsonValue
-    public String getLabel() {
-        return label;
-    }
-
-    @JsonCreator
-    public static EventOption fromValue(String value) {
-        for (EventOption option : values()) {
-            if (option.label.equalsIgnoreCase(value)) {
-                return option;
-            }
-        }
-        throw new IllegalArgumentException("Unknown event option: " + value);
-    }
-
-    /**
-     * @return a comma-separated string of all event format options
-     */
-    public static String getAllOptions() {
-        return Arrays.stream(EventOption.values())
-                .map(EventOption::getLabel)
-                .collect(Collectors.joining(", "));
+    @Override
+    public String getName() {
+        return this.name;
     }
 }

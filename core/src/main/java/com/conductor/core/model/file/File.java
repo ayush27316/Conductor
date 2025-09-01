@@ -1,5 +1,7 @@
-package com.conductor.core.model.common;
+package com.conductor.core.model.file;
 
+import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;

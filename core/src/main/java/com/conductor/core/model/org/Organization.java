@@ -3,13 +3,14 @@ package com.conductor.core.model.org;
 import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.event.Event;
+import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.permission.Privilege;
+import com.conductor.core.model.user.Operator;
+import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "organizations")
@@ -18,10 +19,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class Organization extends Resource {
-
-    @Column(name = "external_id", nullable = false, updatable = false, unique = true)
-    @Builder.Default
-    private String externalId = UUID.randomUUID().toString();
 
     @Column(name = "name", nullable = false, length = 255, unique = true)
     private String name;
@@ -47,12 +44,27 @@ public class Organization extends Resource {
     @Builder.Default
     private Set<Event> events = new HashSet<>();
 
+    @OneToMany(mappedBy = "organization",
+               cascade = CascadeType.PERSIST,
+               fetch = FetchType.LAZY,
+               orphanRemoval = true)
+    private Set<Operator> operators = new HashSet<>();
+
     @PrePersist
     public void prePersist() {
-        super.setResourceType(ResourceType.ORGANIZATION);
-        if (externalId == null) {
-            externalId = UUID.randomUUID().toString();
-        }
+        super.init(ResourceType.ORGANIZATION);
     }
+
+
+    public static Map<Privilege, com.conductor.core.model.permission.AccessLevel> getOwnerPermission() {
+        return Map.ofEntries(
+                Map.entry(OrganizationPrivilege.EVENT, com.conductor.core.model.permission.AccessLevel.WRITE),
+                Map.entry(OrganizationPrivilege.OPERATOR, com.conductor.core.model.permission.AccessLevel.WRITE),
+                Map.entry(OrganizationPrivilege.CONFIG, com.conductor.core.model.permission.AccessLevel.WRITE),
+                Map.entry(OrganizationPrivilege.AUDIT, AccessLevel.READ)
+
+        );
+    }
+
 }
 

@@ -1,23 +1,10 @@
 package com.conductor.core.service;
 
-import com.conductor.core.dto.permission.GrantPermissionRequestDTO;
-import com.conductor.core.dto.permission.GrantPermissionResponseDTO;
-import com.conductor.core.dto.permission.RevokePermissionRequestDTO;
-import com.conductor.core.model.common.ResourceType;
-import com.conductor.core.model.event.EventPrivilege;
-import com.conductor.core.model.org.OrganizationPrivilege;
-import com.conductor.core.model.common.AccessLevel;
-import com.conductor.core.model.permission.Permission;
-import com.conductor.core.model.user.User;
-import com.conductor.core.repository.*;
-import com.conductor.core.util.Pair;
 //import com.conductor.core.util.PermissionMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
 
 @Service
 @RequiredArgsConstructor

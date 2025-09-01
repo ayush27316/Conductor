@@ -13,7 +13,6 @@ import com.conductor.core.repository.EventRepository;
 import com.conductor.core.repository.OrganizationRepository;
 import com.conductor.core.repository.UserRepository;
 import com.conductor.core.util.EventMapper;
-import com.conductor.core.util.OptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,7 +38,7 @@ public class EventService {
         List<Permission> permissions = getCurrentUser().getPermissions();
         Optional<Organization> org = Optional.empty();
         for(Permission p: permissions){
-            if(p.getResource().getResourceType().getLabel().equals(ResourceType.ORGANIZATION.getLabel()))
+            if(p.getResource().getResourceType().getName().equals(ResourceType.ORGANIZATION.getName()))
             {
                 org = Optional.of((Organization) p.getResource());
             }

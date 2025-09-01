@@ -1,6 +1,5 @@
 package com.conductor.core.model.ticket;
 
-import com.conductor.core.util.Option;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
