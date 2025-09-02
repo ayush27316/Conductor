@@ -1,6 +1,5 @@
 package com.conductor.core.controller;
 
-import com.conductor.core.dto.ResponseDTO;
 import com.conductor.core.dto.auth.LoginRequestDTO;
 import com.conductor.core.dto.auth.LoginResponseDTO;
 import com.conductor.core.dto.auth.SignUpRequestDTO;
@@ -9,6 +8,7 @@ import com.conductor.core.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,33 +21,29 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public ResponseDTO<?> login(
+    public ResponseEntity<?> login(
             @Valid @RequestBody LoginRequestDTO loginRequest) {
         try {
             LoginResponseDTO response = authenticationService.login(loginRequest);
-            return ResponseDTO.success("Login Successful.", response);
+            return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
-            return  ResponseDTO.unauthorized("Username or password invalid");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username or password invalid");
         } catch (Exception e) {
-            return ResponseDTO.internalServerError("An internal server error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An internal server error occurred");
         }
     }
 
     @PostMapping("/signup")
-    public ResponseDTO<?> signup(@Valid @RequestBody SignUpRequestDTO signupRequest) {
+    public ResponseEntity<?> signup(@Valid @RequestBody SignUpRequestDTO signupRequest) {
         try {
             authenticationService.signup(signupRequest);
-            return ResponseDTO.success("Signup successfully. Proceed with login.");
+            return ResponseEntity.status(HttpStatus.CREATED).build();
 
         } catch(UsernameAlreadyTakenException e){
-            return ResponseDTO.builder()
-                    .status(HttpStatus.CONFLICT.value())
-                    .success(false)
-                    .message("Username already taken.")
-                    .build();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already taken.");
         }
         catch (Exception e) {
-            return ResponseDTO.internalServerError("An internal server error occurred");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An internal server error occurred");
 
         }
     }

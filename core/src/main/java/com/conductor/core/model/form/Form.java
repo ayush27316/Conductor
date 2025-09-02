@@ -1,4 +1,28 @@
 package com.conductor.core.model.form;
 
-public class Form {
+import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.common.ResourceType;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "forms")
+@Entity
+public class Form extends Resource {
+
+    @Lob
+    @Column(name = "form_schema")
+    private String formSchema;
+
+    @PrePersist
+    public void init()
+    {
+        super.init(ResourceType.FORM);
+    }
 }

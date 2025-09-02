@@ -1,5 +1,7 @@
 package com.conductor.core.model.file;
 
+import com.conductor.core.model.application.Application;
+import com.conductor.core.model.application.ApplicationStatus;
 import com.conductor.core.model.common.BaseEntity;
 import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.user.User;
@@ -7,6 +9,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
 
+/**
+ * Access to file are ususally association based that is why
+ * it doesn't extend a resource but it technically is.
+ */
 @Entity
 @Table(name = "files")
 @Data
@@ -21,7 +27,7 @@ public class File extends BaseEntity {
     @Builder.Default
     private String externalId = UUID.randomUUID().toString();
 
-    /*polymorphic association with resources*/
+
     @ManyToOne
     @JoinColumn(name = "resource_id_fk", nullable = false)
     private Resource resource;

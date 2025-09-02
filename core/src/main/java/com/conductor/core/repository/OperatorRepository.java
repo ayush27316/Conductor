@@ -1,4 +1,15 @@
 package com.conductor.core.repository;
 
-public class OperatorRepository {
+import com.conductor.core.model.user.Operator;
+import com.conductor.core.model.user.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public interface OperatorRepository extends JpaRepository<Operator, Long> {
+
+    public Optional<Operator> findByUser(User user);
+
 }

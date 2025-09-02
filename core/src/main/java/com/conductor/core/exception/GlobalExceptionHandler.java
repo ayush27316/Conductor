@@ -1,8 +1,12 @@
 package com.conductor.core.exception;
 
 import com.conductor.core.dto.ResponseDTO;
+import com.conductor.core.model.common.Option;
+import com.conductor.core.model.event.EventOption;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,6 +21,26 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+//
+//    @ExceptionHandler(InvalidFormatException.class)
+//    public ResponseEntity<String> handleInvalidFormat(InvalidFormatException ex) {
+//        Class<?> targetType = ex.getTargetType();
+//
+//        if (Option.class.isAssignableFrom(targetType)) {
+//
+//            @SuppressWarnings("unchecked")
+//            String allowedValues = Option.getAllOptions(targetType.getClass());
+//
+//            String message = String.format(
+//                    "Invalid value '%s' for %s. Allowed values are: %s",
+//                    ex.getValue(), targetType.getSimpleName(), allowedValues
+//            );
+//            return ResponseEntity.badRequest().body(message);
+//        }
+//
+//        // fallback for other types
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getOriginalMessage());
+//    }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(InvalidServiceRequest.class)

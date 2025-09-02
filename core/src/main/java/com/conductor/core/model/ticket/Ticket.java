@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -38,8 +39,25 @@ public class Ticket extends Resource {
     @Column(nullable = false)
     private TicketStatus status;
 
+    @Column(name = "checked_in_at")
+    private LocalDateTime checkedInAt;
+
+    @Column(name = "tags")
+    private String tags; // comma-separated tags placed by organization
+
     @PrePersist
     public void prePersist() {
         super.init(ResourceType.TICKET);
     }
+
+    public static Ticket creatNewTicket(User user, Event event)
+    {
+        return Ticket.builder()
+                .user(user)
+                .event(event)
+                .status(TicketStatus.IDLE)
+                .build();
+    }
+
+
 }

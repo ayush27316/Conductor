@@ -3,15 +3,13 @@ package com.conductor.core.service;
 import com.conductor.core.dto.ApproveOrganizationRequest;
 import com.conductor.core.dto.OrganizationRegistrationRequest;
 import com.conductor.core.dto.OrganizationRegistrationResult;
+import com.conductor.core.exception.ApplicationNotFound;
 import com.conductor.core.exception.OrganizationApprovalException;
 import com.conductor.core.exception.OrganizationRegistrationException;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.application.ApplicationStatus;
-import com.conductor.core.model.org.OrganizationPrivilege;
-import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.common.ResourceType;
-import com.conductor.core.model.permission.Privilege;
 import com.conductor.core.model.user.UserRole;
 import com.conductor.core.model.org.Organization;
 import com.conductor.core.model.org.OrganizationAudit;
@@ -19,18 +17,31 @@ import com.conductor.core.model.user.User;
 import com.conductor.core.repository.*;
 import com.conductor.core.util.Pair;
 import lombok.RequiredArgsConstructor;
+import com.conductor.core.dto.FormSchemaRequest;
+import com.conductor.core.dto.FormSchemaResponse;
+import com.conductor.core.dto.FormSubmissionRequest;
+import com.conductor.core.exception.FormNotFoundException;
+import com.conductor.core.exception.InvalidFormSubmissionException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 
+/**
+ * {@link Organization} onboarding starts with creating an {@link Application}
+ * for it. Admin users can then interact with the user that made the request using
+ * this Application.
+ */
 @Service
 @RequiredArgsConstructor
-public class OrganizationRegistrationService {
+public class OrganizationApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final OrganizationRepository organizationRepository;
@@ -38,6 +49,7 @@ public class OrganizationRegistrationService {
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /*
     * registerOrganization is the first step before an organization can
@@ -85,7 +97,7 @@ public class OrganizationRegistrationService {
             organizationRepository.save(organization);
 
             Application application = Application.builder()
-                    .resource(organization)
+                    .targetResource(organization)
                     .submittedBy(principal)
                     .build();
 
@@ -105,7 +117,7 @@ public class OrganizationRegistrationService {
 
 
     private Pair<Boolean, String> isUserEligibleToCreateNewApplication(User user) {
-        List<Application> applications = applicationRepository.findByResource_ResourceTypeAndSubmittedBy(
+        List<Application> applications = applicationRepository.findByTargetResource_ResourceTypeAndSubmittedBy(
                 ResourceType.ORGANIZATION,
                 getCurrentUser()
         );
@@ -116,6 +128,61 @@ public class OrganizationRegistrationService {
 
         return Pair.of(false, "An organization application already exists.");
 
+    }
+
+    /**
+     * Get the SurveyJS form schema for an application
+     */
+    public FormSchemaResponse getFormSchema(String applicationExternalId) {
+        Application app = applicationRepository.findByExternalId(applicationExternalId)
+                .orElseThrow(() -> new ApplicationNotFound("Application not found", new IllegalArgumentException()));
+
+        if (app.getFormSchemaJson() == null || app.getFormSchemaJson().isEmpty()) {
+            throw new FormNotFoundException("Form schema not configured for this application");
+        }
+
+        return FormSchemaResponse.builder().schemaJson(app.getFormSchemaJson()).build();
+    }
+
+    /**
+     * Set or update the SurveyJS form schema for an application
+     */
+    @Transactional
+    public void setFormSchema(String applicationExternalId, FormSchemaRequest request) {
+        Application app = applicationRepository.findByExternalId(applicationExternalId)
+                .orElseThrow(() -> new ApplicationNotFound("Application not found", new IllegalArgumentException()));
+
+        validateJson(request.getSchemaJson(), "Invalid form schema JSON");
+        app.setFormSchemaJson(request.getSchemaJson());
+        applicationRepository.save(app);
+    }
+
+    /**
+     * Submit SurveyJS form result for an application
+     */
+    @Transactional
+    public void submitFormResult(String applicationExternalId, FormSubmissionRequest request) {
+        Application app = applicationRepository.findByExternalId(applicationExternalId)
+                .orElseThrow(() -> new ApplicationNotFound("Application not found", new IllegalArgumentException()));
+
+        if (app.getFormSchemaJson() == null) {
+            throw new FormNotFoundException("Form schema not configured for this application");
+        }
+
+        validateJson(request.getResultJson(), "Invalid form result JSON");
+        app.setFormResultJson(request.getResultJson());
+        applicationRepository.save(app);
+    }
+
+    private void validateJson(String json, String errorMessage) {
+        try {
+            JsonNode node = objectMapper.readTree(json);
+            if (node == null || node.isNull()) {
+                throw new InvalidFormSubmissionException(errorMessage);
+            }
+        } catch (Exception e) {
+            throw new InvalidFormSubmissionException(errorMessage);
+        }
     }
 
     /**
@@ -144,16 +211,101 @@ public class OrganizationRegistrationService {
 
             applicationRepository.save(application);
 
-            initiateOrganizationOnboarding((Organization) application.getResource());
+            initiateOrganizationOnboarding((Organization) application.getTargetResource());
 
         }catch (Exception e )
         {
-            e.printStackTrace();
+
             throw new OrganizationApprovalException("Organization Approval failed. Please try again" + e.getMessage(), e);
         }
 
         return true;
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void rejectOrganization(String applicationExternalId, String rejectionReason) {
+
+        User principal = getCurrentUser();
+
+        Optional<Application> applicationOptional = applicationRepository.findByExternalId(applicationExternalId);
+
+        if(applicationOptional.isEmpty()){
+            throw new ApplicationNotFound("Registration Id is not valid.", new IllegalArgumentException());
+        }
+
+        Application application = applicationOptional.get();
+
+        if (application.isFinalStatus()) {
+            throw new IllegalArgumentException("Application is already in a final state. Cannot proceed with the request", new IllegalStateException());
+        }
+
+        try{
+            application.reject(principal, rejectionReason);
+            applicationRepository.save(application);
+
+        }catch (Exception e )
+        {
+            throw new RuntimeException("Organization Rejection failed. Please try again" + e.getMessage(), e);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void addComment(String applicationExternalId, String comment) {
+
+        User principal = getCurrentUser();
+
+        Optional<Application> applicationOptional = applicationRepository.findByExternalId(applicationExternalId);
+
+        if(applicationOptional.isEmpty()){
+            throw new ApplicationNotFound("Registration Id is not valid.", new IllegalArgumentException());
+        }
+
+        Application application = applicationOptional.get();
+
+        try{
+            application.addComment(principal, comment);
+            applicationRepository.save(application);
+
+        }catch (Exception e )
+        {
+            throw new RuntimeException("Add Comment failed. Please try again" + e.getMessage(), e);
+        }
+
+    }
+
+
+    private void addFile(MultipartFile file) throws IOException {
+        //add comment
+        String filename = file.getOriginalFilename();
+        String contentType = file.getContentType();
+        long size = file.getSize();
+        byte[] data = file.getBytes();
+
+        //file.service()
+
+    }
+
+//    @PostMapping("/files")
+//    public ResponseEntity<FileDTO> uploadFile(@RequestParam("file") MultipartFile file,
+//                                              @RequestParam("fileType") FileType fileType,
+//                                              @RequestParam("name") String name) throws IOException {
+//        File savedFile = fileService.saveFile(file, name, fileType);
+//        return ResponseEntity.ok(fileMapper.toDto(savedFile));
+//    }
+//
+//
+//    @GetMapping("/files/{id}/download")
+//    public ResponseEntity<Resource> downloadFile(@PathVariable String id) {
+//        File file = fileService.getFileById(id);
+//
+//        ByteArrayResource resource = new ByteArrayResource(file.getFileDataBlob());
+//
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+//                .contentType(MediaType.parseMediaType(file.getMimeType()))
+//                .contentLength(file.getFileSize())
+//                .body(resource);
+//    }
 
     @Transactional(rollbackFor = Exception.class)
     private void initiateOrganizationOnboarding(Organization org){
@@ -206,4 +358,35 @@ public class OrganizationRegistrationService {
             throw new RuntimeException("Internal Server Error");
         }
     }
+//
+//    // Form helpers for Organization Applications
+//    public FormSchemaResponse getFormSchema(String applicationExternalId) {
+//        Application app = applicationRepository.findByExternalId(applicationExternalId)
+//                .orElseThrow(() -> new ApplicationNotFound("Application not found", new IllegalArgumentException()));
+//        if (app.getFormSchemaJson() == null || app.getFormSchemaJson().isEmpty()) {
+//            throw new FormNotFoundException("Form schema not configured for this application");
+//        }
+//        return FormSchemaResponse.builder().schemaJson(app.getFormSchemaJson()).build();
+//    }
+//
+//    @Transactional
+//    public void setFormSchema(String applicationExternalId, FormSchemaRequest request) {
+//        Application app = applicationRepository.findByExternalId(applicationExternalId)
+//                .orElseThrow(() -> new ApplicationNotFound("Application not found", new IllegalArgumentException()));
+//        validateJson(request.getSchemaJson(), "Invalid form schema JSON");
+//        app.setFormSchemaJson(request.getSchemaJson());
+//        applicationRepository.save(app);
+//    }
+//
+//    @Transactional
+//    public void submitFormResult(String applicationExternalId, FormSubmissionRequest request) {
+//        Application app = applicationRepository.findByExternalId(applicationExternalId)
+//                .orElseThrow(() -> new ApplicationNotFound("Application not found", new IllegalArgumentException()));
+//        if (app.getFormSchemaJson() == null) {
+//            throw new FormNotFoundException("Form schema not configured for this application");
+//        }
+//        validateJson(request.getResultJson(), "Invalid form result JSON");
+//        app.setFormResultJson(request.getResultJson());
+//        applicationRepository.save(app);
+//    }
 }

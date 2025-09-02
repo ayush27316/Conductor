@@ -2,6 +2,7 @@ package com.conductor.core.model.event;
 
 import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.form.Form;
 import com.conductor.core.model.org.Organization;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -31,9 +32,6 @@ public class Event extends Resource {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(name="website_url")
-    private String websiteUrl;
-
     @Column
     private String location;
 
@@ -45,6 +43,14 @@ public class Event extends Resource {
 
     @Embedded
     private EventAccessDetails accessDetails;
+
+    /**
+     * If {@code EventOption.REQUIRE_APPROVAL} is selected then form
+     * is required.
+     */
+    @ManyToOne
+    @JoinColumn(name = "application_form")
+    private Form applicationForm;
 
     @Embedded
     private EventPaymentDetails paymentDetails;
@@ -60,16 +66,52 @@ public class Event extends Resource {
     @JoinColumn(name = "organization_id_fk", nullable = false)
     private Organization organization;
 
-//    @OneToOne
-//    @JoinColumn(name = "image_file_id_fk")
-//    private File imageFile;
-
     @Column(nullable = false , length = 1000)
     private String description;
 
 
+    /******************************
+     * display featues
+     */
+    //a full,css, javascript page for showcaase
+    // and options to show useful metrics
+    //put special tags
+    //*********************************
+
     @PrePersist
     public void prePersist() {
         super.init(ResourceType.EVENT);
+    }
+
+    public boolean hasEnded()
+    {
+        if (end.isBefore(LocalDateTime.now())) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean requiresApplication(){
+        return options.contains(EventOption.REQUIRES_APPROVAL);
+    }
+
+
+    /**
+     * Weather an event is currently accepting applications for tickets
+     * depends on various factors like number of spots left, or if creator
+     * of this event doesn't require an application, or is application period is
+     * over.
+     * @return true if this event accepts application false otherwise
+     */
+    public boolean acceptsApplication(){
+        if(
+                !requiresApplication()
+                || status.equals(EventStatus.EXPIRED)
+                || status.equals(EventStatus.CANCELLED)
+                || hasEnded()
+        ) {
+            return false;
+        }
+        return true;
     }
 }

@@ -31,8 +31,7 @@ public class EventDTO {
     private String name;
 
    @Schema(implementation = EventFormat.class)
-//    @EnumValue(enumClass = EventFormat.class)
-    private EventFormat format;
+   private EventFormat format;
 
     @NotBlank(message = "Location is required")
     @Schema(description = "Location of the event", example = "Montreal, Canada")
@@ -59,7 +58,7 @@ public class EventDTO {
     //@EnumValue(enumClass = EventOption.class)
     private List<EventOption> options;
 
-   @JsonProperty("access_strategy")
+    @JsonProperty("access_strategy")
     @Schema(implementation = EventAccessStrategy.class)
     //@EnumValue(enumClass=EventAccessStrategy.class)
     private EventAccessStrategy accessStrategy;

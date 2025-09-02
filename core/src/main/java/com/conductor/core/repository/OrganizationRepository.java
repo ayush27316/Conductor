@@ -9,7 +9,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     Optional<Organization> findByName(String name);
 
-   // Optional<Organization> findByExternalId(String externalId);
+   Optional<Organization> findByExternalId(String externalId);
 
 }
 

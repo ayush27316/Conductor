@@ -2,6 +2,7 @@ package com.conductor.core.repository;
 
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.application.ApplicationStatus;
+import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +14,12 @@ import java.util.Optional;
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application,Long> {
 
-    List<Application> findByResource_ResourceTypeAndSubmittedBy(ResourceType resourceType, User submittedBy);
+    List<Application> findByTargetResource_ResourceTypeAndSubmittedBy(ResourceType resourceType, User submittedBy);
+
+    List<Application> findByTargetResource(Resource resource);
+
     Optional<Application> findByExternalId(String externalId);
     List<Application> findByApplicationStatus(ApplicationStatus status);
+
+    List<Application> findBySubmittedBy(User submittedBy);
 }

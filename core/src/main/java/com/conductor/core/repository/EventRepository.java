@@ -10,7 +10,7 @@ import java.util.Optional;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findAllByOrganizationId(Long organizationId);
-    //List<Event> findAllByExternalId(String externalId);
+    Optional<Event> findByExternalId(String externalId);
 
     Optional<Event> findByName(String name);
 

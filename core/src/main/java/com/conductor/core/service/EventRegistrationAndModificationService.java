@@ -1,14 +1,10 @@
 package com.conductor.core.service;
 
-import com.conductor.core.dto.EventDTO;
 import com.conductor.core.dto.event.EventRegistrationRequest;
-import com.conductor.core.exception.EventRegistrationFailedException;
 import com.conductor.core.exception.OrganizationNotFound;
 import com.conductor.core.model.audit.ResourceAudit;
 import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.event.*;
-import com.conductor.core.model.permission.Permission;
-import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.user.User;
 import com.conductor.core.model.org.Organization;
 
@@ -20,18 +16,14 @@ import com.conductor.core.repository.UserRepository;
 import com.conductor.core.util.EventMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class EventRegistrationService{
+public class EventRegistrationAndModificationService{
 
     private final EventRepository eventRepository;
     private final OrganizationRepository organizationRepository;
@@ -80,6 +72,7 @@ public class EventRegistrationService{
                         .build())
                 .description(request.getDescription())
                 .status(EventStatus.DRAFT)
+                .options(request.getOptions())
                 .build();
 
     }
