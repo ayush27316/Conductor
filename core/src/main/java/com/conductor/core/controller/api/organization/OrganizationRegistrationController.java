@@ -1,17 +1,21 @@
-package com.conductor.core.controller.api.application;
+package com.conductor.core.controller.api.organization;
 
 import com.conductor.core.dto.*;
-import com.conductor.core.exception.OrganizationRegistrationException;
 import com.conductor.core.model.application.Application;
+import com.conductor.core.model.user.User;
 import com.conductor.core.service.OrganizationApplicationService;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/organizations")
@@ -22,88 +26,96 @@ public class OrganizationRegistrationController {
 
     @PostMapping("/register")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> registerOrganization(
+    public ResponseEntity<?> register(
+            Authentication auth,
             @Valid @RequestBody OrganizationRegistrationRequest request) {
-        try {
-            OrganizationRegistrationResult result = organizationApplicationService.registerOrganization(request);
 
-            if (result.isSuccess()) {
-                return ResponseEntity.status(HttpStatus.CREATED).body(result);
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to register organization");
-            }
+        String applicationExternalId = organizationApplicationService.register(
+                (User) auth.getPrincipal(),
+                request);
 
-        } catch (OrganizationRegistrationException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+        Map<String, String> body = Map.of("registration_id", applicationExternalId);
+        return ResponseEntity.ok().body(body);
+
     }
 
-    // Form schema & submission endpoints for organization applications
-    @GetMapping("/{applicationExternalId}/form")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<FormResponse> getOrganizationForm(@PathVariable String applicationExternalId) {
-        try {
-            return ResponseEntity.ok(organizationApplicationService.getFormSchema(applicationExternalId));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+
+    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+    @PutMapping("/applications/{application-id}/approve")
+    public ResponseEntity<?> approveApplication(
+            @PathVariable("application-id")
+            @NotBlank(message = "Application Id is required")
+            @Size(min = 36, max = 36)
+            String applicationExternalId,
+            Authentication authentication) {
+
+        organizationApplicationService.approve(
+                (User) authentication.getPrincipal(),
+                applicationExternalId
+        );
+
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{applicationExternalId}/form")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> setOrganizationForm(@PathVariable String applicationExternalId,
-                                                                @RequestBody @Valid FormSchemaRequest request) {
-        try {
-            organizationApplicationService.setFormSchema(applicationExternalId, request);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+    @PutMapping("/applications/{application-id}/reject")
+    public ResponseEntity<?> rejectApplication(
+            @PathVariable("application-id")
+            @NotBlank(message = "Application Id is required")
+            @Size(min = 36, max = 36)
+            String applicationExternalId,
+            @RequestParam @NotBlank(message = "Rejection reason cannot be blank")
+            @Size(max = 200, message = "Reason must be at most 200 characters")
+            String reason,
+            Authentication authentication) {
+
+        organizationApplicationService.reject(
+                (User) authentication.getPrincipal(),
+                applicationExternalId,
+                reason
+        );
+
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{applicationExternalId}/form/submit")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> submitOrganizationForm(@PathVariable String applicationExternalId,
-                                                                   @RequestBody @Valid FormSubmissionRequest request) {
-        try {
-            organizationApplicationService.submitFormResult(applicationExternalId, request);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+    //@PreAuthorize("hasPermission(#application-id, 'application', {cancel:'write'})")
+    @DeleteMapping("/applications/{application-id}")
+    public ResponseEntity<?> cancelApplication(
+            @PathVariable("application-id")
+            @NotBlank(message = "Application Id is required")
+            @Size(min = 36, max = 36)
+            String applicationExternalId) {
+
+        organizationApplicationService.cancel(applicationExternalId);
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/approve")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> approveOrganization(
-            @Valid @RequestBody ApproveOrganizationRequest request) {
-        try {
-            boolean result = organizationApplicationService.approveOrganization(request);
+    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+    @PostMapping("/applications/{application-id}/comments")
+    public ResponseEntity<?> comment(
+            @PathVariable("application-id")
+            @NotBlank(message = "Application Id is required")
+            @Size(min = 36, max = 36)
+            String applicationExternalId,
+            @RequestParam @NotBlank(message = "Comment cannot be blank")
+            @Size(max = 1000, message = "Comment cannot exceed 1000 characters")
+            String comment,
+            Authentication authentication) {
 
-            if (result) {
-                return ResponseEntity.ok().build();
+        organizationApplicationService.comment(
+                (User) authentication.getPrincipal(),
+                applicationExternalId,
+                comment
+        );
 
-            } else {
-                return ResponseEntity.badRequest().body("Failed to approve organization registration");
-            }
-
-        } catch (OrganizationRegistrationException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/pending")
+    @GetMapping("/applications/pending")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Application>> getAllPendingOrganizations() {
-
-        try {
-
-            List<Application> pendingRegistrations =
-                    organizationApplicationService.getAllOrganizationsWaitingForApproval();
-
-            return ResponseEntity.ok(pendingRegistrations);
-
-        } catch (RuntimeException e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();         }
+        List<Application> pendingRegistrations =
+                organizationApplicationService.getAllOrganizationsWaitingForApproval();
+        return ResponseEntity.ok(pendingRegistrations);
     }
 }

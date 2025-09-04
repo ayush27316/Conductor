@@ -12,4 +12,5 @@ public interface OperatorRepository extends JpaRepository<Operator, Long> {
 
     public Optional<Operator> findByUser(User user);
 
+    Optional<Operator> findByExternalId(String externalId);
 }

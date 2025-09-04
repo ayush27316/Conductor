@@ -100,13 +100,13 @@ public class Event extends Resource {
      * Weather an event is currently accepting applications for tickets
      * depends on various factors like number of spots left, or if creator
      * of this event doesn't require an application, or is application period is
-     * over.
+     * over. This assumes that event requires and application.
+     * {@see requiresApplicaiton}
      * @return true if this event accepts application false otherwise
      */
     public boolean acceptsApplication(){
         if(
-                !requiresApplication()
-                || status.equals(EventStatus.EXPIRED)
+                 status.equals(EventStatus.EXPIRED)
                 || status.equals(EventStatus.CANCELLED)
                 || hasEnded()
         ) {

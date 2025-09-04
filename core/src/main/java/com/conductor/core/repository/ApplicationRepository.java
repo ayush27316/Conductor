@@ -22,4 +22,12 @@ public interface ApplicationRepository extends JpaRepository<Application,Long> {
     List<Application> findByApplicationStatus(ApplicationStatus status);
 
     List<Application> findBySubmittedBy(User submittedBy);
+
+    List<Application> findByTargetResource_ExternalId(String externalId);
+
+    boolean existsBySubmittedByAndTargetResource(User user, Resource targetResource);
+
+    List<Application> findByTargetResource_ResourceType(ResourceType resourceType);
+
+    List<Application> findByTargetResource_ResourceTypeAndApplicationStatus(ResourceType resourceType, ApplicationStatus applicationStatus);
 }

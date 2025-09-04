@@ -67,7 +67,7 @@ public class TicketPurchaseService {
 
         // Mark checked in
         ticket.setStatus(TicketStatus.CHECKED_IN);
-        ticket.setCheckedInAt(LocalDateTime.now());bookTicket
+        ticket.setCheckedInAt(LocalDateTime.now());
         ticketRepository.save(ticket);
 
         return TicketDTO.builder()

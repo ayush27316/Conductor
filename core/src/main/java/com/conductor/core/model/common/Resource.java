@@ -23,14 +23,14 @@ import java.util.UUID;
 public abstract class Resource extends BaseEntity {
 
     /**
-     * {@code externalGuid} is meant to be used as a globally unique reference
+     * {@code externalId} is meant to be used as a globally unique reference
      * to this resource.
      */
-    @Column(name = "external_guid",
+    @Column(name = "external_id",
             unique = true,
             updatable = false,
             nullable = false)
-    private String externalGuid;
+    private String externalId;
 
     @Column(name = "resource_type",
             updatable = false,
@@ -45,8 +45,8 @@ public abstract class Resource extends BaseEntity {
      *
      */
     public void init(ResourceType resourceType){
-        if(Objects.isNull(externalGuid)){
-            externalGuid = UUID.randomUUID().toString();
+        if(Objects.isNull(externalId)){
+            externalId = UUID.randomUUID().toString();
         }
 
         this.resourceType = resourceType;
@@ -62,7 +62,7 @@ public abstract class Resource extends BaseEntity {
      */
     public String getExternalId()
     {
-        return this.externalGuid;
+        return this.externalId;
     }
 //
 //    //safeCast

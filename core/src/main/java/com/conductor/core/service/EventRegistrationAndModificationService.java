@@ -32,7 +32,7 @@ public class EventRegistrationAndModificationService{
     private final ResourceAuditRepository resourceAuditRepository;
 
     @Transactional
-    public boolean registerEvent(Authentication auth,
+    public boolean registerEvent(User user,
                                  EventRegistrationRequest request) {
 
         Organization org = organizationRepository.findByExternalId(request.getOrganizationId())
@@ -42,7 +42,7 @@ public class EventRegistrationAndModificationService{
         event.setOrganization(org);
         ResourceAudit audit = ResourceAudit.builder()
                 .createdAt(LocalDateTime.now())
-                .createdBy((User) auth.getPrincipal())
+                .createdBy(user)
                 .resource((Resource) event)
                 .build();
 

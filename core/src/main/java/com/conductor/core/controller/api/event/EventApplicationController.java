@@ -1,4 +1,4 @@
-package com.conductor.core.controller.api.application;
+package com.conductor.core.controller.api.event;
 
 import com.conductor.core.dto.ApplicationDTO;
 import com.conductor.core.dto.FormResponse;

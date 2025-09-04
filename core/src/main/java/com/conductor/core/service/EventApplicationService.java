@@ -2,43 +2,46 @@ package com.conductor.core.service;
 
 import com.conductor.core.dto.ApplicationDTO;
 import com.conductor.core.exception.*;
-import com.conductor.core.model.application.ApplicationComment;
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.org.Organization;
-import com.conductor.core.model.user.Operator;
-import com.conductor.core.model.user.UserRole;
+import com.conductor.core.manager.ApplicationManager;
+import com.conductor.core.model.ticket.Ticket;
 import com.conductor.core.repository.*;
 import com.conductor.core.util.ApplicationMapper;
+import com.conductor.core.util.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.conductor.core.model.application.Application;
-import com.conductor.core.model.application.ApplicationStatus;
 import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.event.Event;
-import com.conductor.core.model.ticket.Ticket;
-import com.conductor.core.model.ticket.TicketStatus;
 import com.conductor.core.model.user.User;
-import com.stripe.model.tax.Registration;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Service for handling event applications/reservations.
- * Users can submit applications for events, and organization operators
- * can approve/reject them, resulting in ticket creation.
+ * Service layer for handling event applications (reservations).
+ * <p>
+ * This service provides methods for participants to apply to events,
+ * submit application forms, and manage application lifecycle operations
+ * (approve, reject, cancel, comment). It interacts with repositories
+ * and delegates core business logic to {@link ApplicationManager}.
+ * </p>
+ *
+ * <p>
+ * Typical workflow:
+ * <ul>
+ *     <li>Users apply for an event that requires an application.</li>
+ *     <li>Operators approve or reject submitted applications.</li>
+ *     <li>Approved applications may result in ticket issuance.</li>
+ * </ul>
+ * </p>
  */
 @Service
 @RequiredArgsConstructor
 public class EventApplicationService {
 
+    private final ApplicationManager applicationManager;
     private final EventApplicationRepository eventApplicationRepository;
     private final EventRepository eventRepository;
     private final TicketRepository ticketRepository;
@@ -49,26 +52,33 @@ public class EventApplicationService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
-     * Enroll for an event via an application. If event accepts applications
-     * a new application and user has paid (if payment is required) for the event,
-     * a new application is created. Both the client and organization can communicate
-     * via the application.
+     * Apply for a given event.
+     * <p>
+     * This validates that the event exists and currently accepts applications.
+     * Verifies form response and then finally registers a new application for
+     * the user.
+     * </p>
      *
-     * @return external id of the application.
+     * @param eventExternalId external identifier of the event
+     * @param formResponse response to the form associated with the event
+     * @return external identifier of the newly created application
+     *
+     * @throws EventNotFoundException               if the event does not exist
+     * @throws IllegalArgumentException             either arguments are {@code null or form response is in-valid
+     * @throws ApplicationRequestFailedException    This exception can be thrown for the following resaons:-
+     *  <p>
+     *      <ul>
+     *        <li>if an application for this event already exists.</li>
+     *        <li>If the event does not accept or no longer accepts applications.</li>
+     *        <li>If a database operations failed..</li>
+     *      </ul>
+     *  </p>
      */
     @Transactional
     public String apply(
-            Authentication auth,
-            String eventExternalId) {
-
-        notNull(eventExternalId, "Event id is required");
-
-        if(Objects.isNull(eventExternalId)) {
-            throw new IllegalArgumentException("Event id is required");
-        }
-        User currentUser = (User) auth.getPrincipal();
-
-        //check payment status
+            User user,
+            String eventExternalId,
+            String formResponse) {
 
         Event event = eventRepository.findByExternalId(eventExternalId)
                 .orElseThrow(
@@ -76,169 +86,146 @@ public class EventApplicationService {
                 );
 
         if(!event.requiresApplication()) {
-            throw new ApplicationSubmissionFailed("This event does not accept applications");
+            throw new ApplicationRequestFailedException("This event does not accept applications");
         }
         if(!event.acceptsApplication()) {
-            throw new ApplicationSubmissionFailed("This event is no longer accepting applications");
+            throw new ApplicationRequestFailedException("This event is no longer accepting applications");
         }
 
-        // Check if user already has a pending application for this event
-        if (eventApplicationRepository.existsBySubmittedByAndTargetResource(
-                currentUser, event)) {
-            throw new ApplicationSubmissionFailed("You already have a pending application for this event");
-        }
+        // TODO: check if the  current user has paid for this event
 
-        Application application = Application.createNewApplicatonForEvent(event,(User) auth.getPrincipal());
-        currentUser.getApplications().add(application);
+        // TODO: validate form response
 
-        // To Do: asynchronously do analytics if configured
+        Application application = applicationManager.registerApplication(
+                user,
+                event,
+                formResponse
+                );
 
-        userRepository.save(currentUser);
-        
+        // TODO: asynchronously do analytics if configured
+
         return application.getExternalId();
     }
 
+    /**
+     * Get an event's form by its external identifier
+     * @param eventExternalId external id of the target event
+     * @return Form of the event in {@code String}
+     *
+     * @throws IllegalArgumentException     if argument is {@code null}
+     * @throws EventNotFoundException      if the event is not found.
+     */
     @Transactional
-    public void submitApplicationFormResponse(
-            Authentication auth,
-            String applicationExternalId,
-            String formResponse) {
-
-        notNull(applicationExternalId, "Application Id is required");
-        notNull(formResponse, "Form response is required");
-
-        Application application = findApplication(applicationExternalId);
-
-        if (!application.hasForm()) {
-            throw new FormNotFoundException("Form not configured for this application");
-        }
-
-        validateFormResponse(formResponse, "Invalid form response");
-
-        application.setApplicationFormResponse(formResponse);
-        applicationRepository.save(application);
-    }
-
-    @Transactional
-    public void approveEventApplication(
-            Authentication auth,
-            String applicationExternalId)
+    public String getEventForm(String eventExternalId)
     {
+        Utils.notNull(eventExternalId, "Event Id is required");
 
-        notNull(applicationExternalId, "Application Id is required");
-
-        User currentUser = (User) auth.getPrincipal();
-        Application application = findApplication(applicationExternalId);
-
-        application.approve(currentUser);
-        applicationRepository.save(application);
-
-        // Create ticket for the user who submitted the application
-        Event event = (Event) application.getTargetResource();
-        User user = application.getSubmittedBy();
-
-        Ticket ticket = Ticket.creatNewTicket(user,event);
-
-        user.getTickets().add(ticket);
-        userRepository.save(user);
-
-    }
-
-
-    @Transactional
-    public void cancelEventApplication(
-            Authentication auth,
-            String applicationExternalId)
-    {
-        notNull(applicationExternalId, "Application Id is required");
-
-        User currentUser = (User)auth.getPrincipal();
-        Application application = findApplication(applicationExternalId);
-
-        application.cancel();
-        applicationRepository.save(application);
-    }
-
-
-    @Transactional
-    public void rejectEventApplication(
-            Authentication auth,
-            String applicationExternalId,
-            String reason)
-    {
-        notNull(applicationExternalId, "Application Id is required");
-        notNull(reason, "Rejection reason is required");
-
-        Application application = findApplication(applicationExternalId);
-
-        application.reject((User) auth.getPrincipal(), reason);
-        applicationRepository.save(application);
-    }
-
-
-    private void validateFormResponse(String response, String errorMessage) {
-        try {
-            JsonNode node = objectMapper.readTree(response);
-            if (node == null || node.isNull()) {
-                throw new InvalidFormSubmissionException(errorMessage);
-            }
-        } catch (Exception e) {
-            throw new InvalidFormSubmissionException(errorMessage);
-        }
-    }
-
-
-    @Transactional
-    public void addComment(
-            Authentication auth,
-            String applicationExternalId,
-            String comment) {
-
-        notNull(applicationExternalId, "Application Id is required");
-        notNull(comment, "Comment is required");
-
-        Application application = findApplication(applicationExternalId);
-
-        application.addComment((User) auth.getPrincipal(), comment);
-        applicationRepository.save(application);
-    }
-
-    public List<ApplicationDTO> getEventApplications(String eventExternalId) {
         Event event = eventRepository.findByExternalId(eventExternalId)
                 .orElseThrow(
                         () -> new EventNotFoundException()
                 );
-
-        return applicationRepository
-                .findByTargetResource(event).stream()
-                .map(ApplicationMapper::toDto)
-                .collect(Collectors.toList());
+        return event.getApplicationForm().getFormSchema();
     }
 
+    /**
+     * Approve an application for an event. This grants a ticket to the user
+     * that submitted the application a ticket.
+     *
+     * @param applicationExternalId external identifier of the application
+     *
+     * @throws ApplicationNotFound                  if the application cannot be found
+     * @throws IllegalArgumentException             if application external id is {@code null}
+     * @throws ApplicationRequestFailedException    for all other exceptions cause due to database operations failure.
+     */
+    @Transactional
+    public void approveEventApplication(
+            User approvedBy,
+            String applicationExternalId) {
 
-    public List<ApplicationDTO> getUserEventApplications(Authentication auth) {
-        return applicationRepository.findBySubmittedBy((User) auth.getPrincipal()).stream()
-                .map(ApplicationMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-
-    private Application findApplication(String applicationExternalId) {
-        Optional<Application> appOpt = applicationRepository.findByExternalId(applicationExternalId);
-        if (
-                appOpt.isEmpty() ||
-                !ResourceType.EVENT.equals(appOpt.get().getTargetResource().getResourceType()))
-        {
-            throw new ApplicationNotFound("Application not found");
+        Application application = applicationManager.findApplication(applicationExternalId);
+        if(!application.getTargetResource().getResourceType().equals(ResourceType.EVENT)){
+            throw new ApplicationNotFound();
         }
-        return appOpt.get();
+        User submittedBy = application.getSubmittedBy();
+        applicationManager.approveApplication(approvedBy, applicationExternalId);
+
+        Ticket ticket = Ticket.creatNewTicket(
+                submittedBy,
+                (Event)application.getTargetResource());
+
+        submittedBy.getTickets().add(ticket);
+        try{
+            userRepository.save(submittedBy);
+        }catch (Exception e) {
+            throw new ApplicationRequestFailedException();
+        }
     }
 
-    private void notNull(Object ob, String message)
+    /**
+     * Cancel an application for an event.
+     *
+     * @param applicationExternalId external identifier of the application
+     *
+     * @throws ApplicationNotFound                      if the application cannot be found
+     * @throws ApplicationRequestFailedException        for all other exceptions cause due to database operations failure.
+     */
+    @Transactional
+    public void cancelEventApplication(String applicationExternalId)
     {
-        if(Objects.isNull(ob)) {
-            throw new IllegalArgumentException(message);
-        }
+      applicationManager.cancelEventApplication(applicationExternalId);
     }
 
+    /**
+     * Reject an application for an event with a reason.
+     *
+     * @param applicationExternalId external identifier of the application
+     * @param reason                reason for rejection
+     *
+     * @throws ApplicationNotFound                      if the application cannot be found
+     * @throws ApplicationRequestFailedException        for all other exceptions cause due to database operations failure.
+     */
+    @Transactional
+    public void rejectEventApplication(
+            User user,
+            String applicationExternalId,
+            String reason)
+    {
+        applicationManager.rejectEventApplication(
+                user,
+                applicationExternalId,
+                reason);
+    }
+
+    /**
+     * Add a comment to an event application.
+     *
+     * @param applicationExternalId external identifier of the application
+     * @param comment               content of the comment
+     *
+     * @throws ApplicationNotFound                  if the application cannot be found
+     * @throws ApplicationRequestFailedException    for all other exceptions cause due to database operations failure.
+     */
+    @Transactional
+    public void comment(
+            User user,
+            String applicationExternalId,
+            String comment) {
+       applicationManager.addComment(user,applicationExternalId,comment);
+    }
+
+    /**
+     * Get all applications submitted for a given event.
+     *
+     * @param eventExternalId external identifier of the event
+     * @return list of {@link ApplicationDTO} representing all event applications
+     *
+     * @throws ApplicationRequestFailedException    for all exceptions cause due to database operations failure.
+     */
+    public List<ApplicationDTO> getEventApplications(String eventExternalId) {
+
+        return applicationManager.getAllApplicationsForAResource(eventExternalId)
+                .stream()
+                .map(ApplicationMapper::toDto)
+                .collect(Collectors.toList());
+    }
 }

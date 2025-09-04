@@ -50,13 +50,20 @@ public class Ticket extends Resource {
         super.init(ResourceType.TICKET);
     }
 
+    /**
+     * Creates a new Ticket object.
+     * @param user user to which this ticket will be assigned must not transient or null.
+     * @param event event to which this ticket can grant access. Must not be null or transient.
+     * @return a new ticket
+     */
     public static Ticket creatNewTicket(User user, Event event)
     {
-        return Ticket.builder()
+        Ticket ticket = Ticket.builder()
                 .user(user)
                 .event(event)
                 .status(TicketStatus.IDLE)
                 .build();
+        return ticket;
     }
 
 

@@ -27,8 +27,8 @@ public class AuthenticationService {
 
     public LoginResponseDTO login(LoginRequestDTO loginRequestDto) {
         Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequestDto.getUsername(), loginRequestDto.getPassword())
-            );
+                new UsernamePasswordAuthenticationToken(loginRequestDto.getUsername(), loginRequestDto.getPassword())
+        );
 
         User user =  (User) authentication.getPrincipal();
 
@@ -50,13 +50,12 @@ public class AuthenticationService {
                 .lastName(signupRequestDto.getLastName())
                 .emailAddress(signupRequestDto.getEmail())
                 .role(UserRole.USER).build();
-        
+
         userRepository.save(user);
 
         return new SignUpResponseDTO(user.getExternalId().toString(), "User signup successful");
     }
 }
-
 
 
 

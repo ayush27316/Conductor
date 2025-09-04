@@ -47,6 +47,11 @@ public enum EventPrivilege implements Privilege {
     MEMBER("member"),
 
     /**
+     * Represents all applications submitted by users for tickets.
+     */
+    APPLICATION("application"),
+
+    /**
      * Represents ticket management for this event.
      * Users with this privilege can create, modify, and manage tickets.
      */

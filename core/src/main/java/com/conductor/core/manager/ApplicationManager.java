@@ -1,5 +1,5 @@
 
-package com.conductor.core.service;
+package com.conductor.core.manager;
 
 import com.conductor.core.exception.*;
 import com.conductor.core.model.application.ApplicationStatus;
@@ -22,7 +22,7 @@ import java.util.Optional;
  * are also persisted.
  */
 @RequiredArgsConstructor
-public class ApplicationService {
+public class ApplicationManager {
 
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;

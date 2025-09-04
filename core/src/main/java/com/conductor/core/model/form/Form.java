@@ -25,4 +25,8 @@ public class Form extends Resource {
     {
         super.init(ResourceType.FORM);
     }
+
+    public static Form createNew(String formSchema){
+        return Form.builder().formSchema(formSchema).build();
+    }
 }

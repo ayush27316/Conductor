@@ -1,4 +1,4 @@
-package com.conductor.core.controller;
+package com.conductor.core.controller.api.auth;
 
 import com.conductor.core.dto.auth.LoginRequestDTO;
 import com.conductor.core.dto.auth.LoginResponseDTO;
