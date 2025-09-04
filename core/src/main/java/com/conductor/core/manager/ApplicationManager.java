@@ -1,33 +1,26 @@
+
 package com.conductor.core.service;
 
-import com.conductor.core.dto.ApplicationDTO;
 import com.conductor.core.exception.*;
-
+import com.conductor.core.model.application.ApplicationStatus;
 import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.form.Form;
+import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.repository.*;
-import com.conductor.core.util.ApplicationMapper;
 import com.conductor.core.util.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.user.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.function.Consumer;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Provides operations for creating, approving, rejecting, canceling,
- * and managing forms or comments for an applications.
+ * and managing forms or comments for an applications. The operations
+ * are also persisted.
  */
-@Service
 @RequiredArgsConstructor
 public class ApplicationService {
 
@@ -39,25 +32,28 @@ public class ApplicationService {
 
     /**
      * Creates a new {@link Application} for the specified {@link User} and {@link Resource}
-     * and registers/persists it.
+     * and persists it.
      *
-     * @param user           user creating the application (must not be {@code null} or transient )
-     * @param targetResource resource being applied to (must not be {@code null} or transient )
-     * @param form           optional form to attach to the application (if present then it must not be
-     *                       a transient entity)
      *
-     * @throws IllegalArgumentException             if user or resource is {@code null}
-     * @throws ApplicationRequestFailedException    if an application for the same resource already exists
-     *                                              or a database operations failed.
+     * @param user           user creating the application (must not be {@code null} or transient ).
+     * @param targetResource resource being applied to (must not be {@code null} or transient ).
+     * //@param form          form to attach to the application must not be {@code null} or transient.
+     * @param formResponse    optional response of the form. Must be validated by the callee.
+     *
+     * @throws IllegalArgumentException             if any argument is {@code null}
+     * @throws ApplicationRequestFailedException    if an application by the user for the same
+     *                                              resource already exists or a database operations
+     *                                              failed due to arguments being null or transient.
      */
-    @Transactional
     public Application registerApplication(
             User user,
             Resource targetResource,
-            Optional<Form> form
+            String formResponse
     ){
-        notNull(user, "User cannot be null");
-        notNull(targetResource, "Target resource cannot be null");
+        //no need to check as an exception will be thrown when
+        //trying to persist PersistenceException.
+        //        notNull(user, "User cannot be null");
+//        notNull(targetResource, "Target resource cannot be null");
 
         // Check if user already has an application for this resource
         if (applicationRepository.existsBySubmittedByAndTargetResource(
@@ -68,10 +64,11 @@ public class ApplicationService {
                     );
         }
 
-        Application application = Application.createNewApplicaton(
+        Application application = Application.createNew(
                 targetResource,
                 user,
-                form.isEmpty()? null : form.get());
+//                form,
+                formResponse);
 
         user.getApplications().add(application);
 
@@ -84,81 +81,31 @@ public class ApplicationService {
     }
 
     /**
-     * Approves an existing {@link Application}.
+     * Approves an existing {@link Application} then persists the change.
      *
-     * @param user                   user approving the application (must not be {@code null} or transient)
+     * @param approvedBy                   user approving the application (must not be {@code null} or transient)
      * @param applicationExternalId  external identifier of the application (must not be {@code null})
+     *
      * @throws ApplicationNotFound                  if the application cannot be found
      * @throws IllegalArgumentException             if arguments are {@code null}
+     * @throws IllegalStateException                if application is in final state. See {@link Application#isFinalStatus()}
      * @throws ApplicationRequestFailedException    for all other exceptions cause due to database operations failure.
      */
-    @Transactional
     public Application approveApplication(
-            User user,
+            User approvedBy,
             String applicationExternalId)
     {
 
-        notNull(user, "User cannot be null");
-        notNull(applicationExternalId, "Application Id is required");
+//        notNull(user, "User cannot be null");
+//        notNull(applicationExternalId, "Application Id is required");
 
         Application application = findApplication(applicationExternalId);
-        application.approve(user);
-        saveOrElseThrow(application);
-
-        return application;
-    }
-
-    /**
-     * Adds a {@link Form} schema to an {@link Application}.
-     *
-     * @param applicationExternalId external identifier of the application (must not be {@code null})
-     * @param formSchema            form schema JSON string
-     * @throws ApplicationNotFound                  if the application cannot be found
-     * @throws ApplicationRequestFailedException    for all other exceptions cause due to database operations failure.
-     */
-    @Transactional
-    public Application addForm(
-            String applicationExternalId,
-            String formSchema)
-    {
-        Application application = findApplication(applicationExternalId);
-        Form form = formRepository.save(Form.createNew(formSchema));
-
-        application.setApplicationForm(form);
-        applicationRepository.save(application);
-        saveOrElseThrow(application);
-        return application;
-    }
-
-    /**
-     * Submits a response for the application form.
-     *
-     * @param applicationExternalId external identifier of the application (must not be {@code null})
-     * @param formResponse          response JSON string for the form (must not be {@code null})
-     *
-     * @throws FormNotFoundException       if the application does not have a form
-     * @throws InvalidFormSubmissionException if the form response is invalid
-     * @throws ApplicationNotFound         if the application cannot be found
-     * @throws ApplicationRequestFailedException for all other exceptions cause due to database operations failure.
-     */
-    @Transactional
-    public Application submitApplicationFormResponse(
-            String applicationExternalId,
-            String formResponse) {
-
-        notNull(applicationExternalId, "Application Id is required");
-        notNull(formResponse, "Form response is required");
-
-        Application application = findApplication(applicationExternalId);
-
-        if (!application.hasForm()) {
-            throw new FormNotFoundException("Form not configured for this application");
+        if(application.isApproved()) {
+            throw new ApplicationRequestFailedException("Application is already approved");
         }
-
-        validateFormResponse(formResponse, "Invalid form response");
-
-        application.setApplicationFormResponse(formResponse);
+        application.approve(approvedBy);
         saveOrElseThrow(application);
+
         return application;
     }
 
@@ -166,14 +113,15 @@ public class ApplicationService {
      * Cancels an existing {@link Application}.
      *
      * @param applicationExternalId external identifier of the application (must not be {@code null})
-     * @throws ApplicationNotFound                      if the application cannot be found
-     * @throws ApplicationRequestFailedException        for all other exceptions cause due to database operations failure.
+     *
+     * @throws ApplicationNotFound                  if the application cannot be found
+     * @throws ApplicationRequestFailedException    for all other exceptions cause due to database operations failure.
+     * @throws IllegalStateException                if application is in final state. See {@link Application#isFinalStatus()}
      */
-    @Transactional
     public Application cancelEventApplication(
             String applicationExternalId)
     {
-        notNull(applicationExternalId, "Application Id is required");
+//        notNull(applicationExternalId, "Application Id is required");
 
         Application application = findApplication(applicationExternalId);
 
@@ -184,27 +132,35 @@ public class ApplicationService {
 
 
     /**
-     * Rejects an existing {@link Application} with a reason.
+     * Rejects an existing {@link Application} with a reason and then persists it.
      *
      * @param user                   user rejecting the application (must not be {@code null})
      * @param applicationExternalId  external identifier of the application (must not be {@code null})
      * @param reason                 reason for rejection (must not be {@code null})
+     *
      * @throws ApplicationNotFound                      if the application cannot be found
      * @throws ApplicationRequestFailedException        for all other exceptions cause due to database operations failure.
+     * @throws IllegalStateException                    if application is in final state. See {@link Application#isFinalStatus()}
      */
-    @Transactional
     public Application rejectEventApplication(
             User user,
             String applicationExternalId,
             String reason)
     {
-        notNull(user, "User cannot be null");
-        notNull(applicationExternalId, "Application Id is required");
+//        notNull(user, "User cannot be null");
+//        notNull(applicationExternalId, "Application Id is required");
         notNull(reason, "Rejection reason is required");
 
         Application application = findApplication(applicationExternalId);
 
+        if (application.isFinalStatus()) {
+            throw new ApplicationRequestFailedException(
+                    "Application is " + application.getApplicationStatus().getName(),
+                    new IllegalStateException());
+        }
+
         application.reject(user, reason);
+
         saveOrElseThrow(application);
         return application;
     }
@@ -215,22 +171,22 @@ public class ApplicationService {
      * @param user                   user adding the comment (must not be {@code null})
      * @param applicationExternalId  external identifier of the application (must not be {@code null})
      * @param comment                comment text (must not be {@code null})
+     *
      * @throws ApplicationNotFound                  if the application cannot be found
      * @throws ApplicationRequestFailedException    for all other exceptions cause due to database operations failure.
      */
-    @Transactional
     public Application addComment(
             User user,
             String applicationExternalId,
             String comment) {
 
-        notNull(user, "User cannot be null");
-        notNull(applicationExternalId, "Application Id is required");
-        notNull(comment, "Comment is required");
+//        notNull(user, "User cannot be null");
+//        notNull(applicationExternalId, "Application Id is required");
+//        notNull(comment, "Comment is required");
 
         Application application = findApplication(applicationExternalId);
 
-        application.addComment(user,comment);
+        application.putComment(user,comment);
         saveOrElseThrow(application);
         return application;
     }
@@ -240,8 +196,8 @@ public class ApplicationService {
      *
      * @param resourceExternalId external identifier of the resource
      * @return list of {@link Application} objects for the resource
+     * @throws ApplicationRequestFailedException  if database operation failed
      */
-    @Transactional
     public List<Application> getAllApplicationsForAResource(String resourceExternalId) {
         try {
             return applicationRepository
@@ -251,14 +207,30 @@ public class ApplicationService {
         }
     }
 
+    /**
+     * Fetches all applications associated with a target resource.
+     *
+     * @param resourceType type of the resource
+     * @return list of {@link Application} objects for the resource
+     * @throws ApplicationRequestFailedException  if database operation failed
+     */
+    public List<Application> getAllPendingApplicationsOfResourceType(ResourceType resourceType) {
+        try {
+            return applicationRepository
+                    .findByTargetResource_ResourceTypeAndApplicationStatus(resourceType, ApplicationStatus.PENDING);
+        }catch (Exception e) {
+            throw new ApplicationRequestFailedException("Application request failed",e);
+        }
+    }
+
 
     /**
-    * Finds an application by its external ID.
-    *
-    * @param applicationExternalId external identifier of the application
-    * @return the found {@link Application}
-    * @throws ApplicationNotFound if the application cannot be found
-    */
+     * Finds an application by its external ID.
+     *
+     * @param applicationExternalId external identifier of the application
+     * @return the found {@link Application}
+     * @throws ApplicationNotFound if the application cannot be found
+     */
     public Application findApplication(String applicationExternalId) {
         Optional<Application> appOpt = applicationRepository.findByExternalId(applicationExternalId);
         if (appOpt.isEmpty()) {
@@ -273,17 +245,6 @@ public class ApplicationService {
             applicationRepository.save(application);
         }catch (Exception e) {
             throw new ApplicationRequestFailedException("Application request failed",e);
-        }
-    }
-
-    private void validateFormResponse(String response, String errorMessage) {
-        try {
-            JsonNode node = objectMapper.readTree(response);
-            if (node == null || node.isNull()) {
-                throw new InvalidFormSubmissionException(errorMessage);
-            }
-        } catch (Exception e) {
-            throw new InvalidFormSubmissionException(errorMessage);
         }
     }
 
