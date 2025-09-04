@@ -2,7 +2,6 @@ package com.conductor.core.controller;
 
 import com.conductor.core.dto.EventDTO;
 import com.conductor.core.exception.EventRegistrationFailedException;
-import com.conductor.core.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,7 +10,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.lang.IllegalArgumentException;
 
 @RestController
 @RequestMapping("/api/events")

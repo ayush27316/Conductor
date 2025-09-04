@@ -1,4 +1,4 @@
-package com.conductor.core.controller;
+package com.conductor.core.controller.api.application;
 
 import com.conductor.core.dto.*;
 import com.conductor.core.exception.OrganizationRegistrationException;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/organizations")
@@ -42,7 +41,7 @@ public class OrganizationRegistrationController {
     // Form schema & submission endpoints for organization applications
     @GetMapping("/{applicationExternalId}/form")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<FormSchemaResponse> getOrganizationForm(@PathVariable String applicationExternalId) {
+    public ResponseEntity<FormResponse> getOrganizationForm(@PathVariable String applicationExternalId) {
         try {
             return ResponseEntity.ok(organizationApplicationService.getFormSchema(applicationExternalId));
         } catch (RuntimeException e) {
