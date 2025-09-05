@@ -1,9 +1,7 @@
 package com.conductor.core.service;
 
-import com.conductor.core.dto.auth.LoginRequestDTO;
-import com.conductor.core.dto.auth.LoginResponseDTO;
-import com.conductor.core.dto.auth.SignUpRequestDTO;
-import com.conductor.core.dto.auth.SignUpResponseDTO;
+import com.conductor.core.dto.auth.LoginRequest;
+import com.conductor.core.dto.auth.SignupRequest;
 import com.conductor.core.exception.UsernameAlreadyTakenException;
 import com.conductor.core.model.user.User;
 import com.conductor.core.model.user.UserRole;
@@ -25,38 +23,35 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public LoginResponseDTO login(LoginRequestDTO loginRequestDto) {
+    public String login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequestDto.getUsername(), loginRequestDto.getPassword())
-            );
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+        );
 
         User user =  (User) authentication.getPrincipal();
 
         String token = authUtil.generateAccessToken(user);
-        return new LoginResponseDTO(token);
+        return token;
     }
 
 
-    public SignUpResponseDTO signup(SignUpRequestDTO signupRequestDto) {
+    public void signup(SignupRequest signupRequest) {
 
-        if(!userRepository.findByUsername(signupRequestDto.getUsername()).isEmpty()){
+        if(!userRepository.findByUsername(signupRequest.getUsername()).isEmpty()){
             throw new UsernameAlreadyTakenException("User name is taken");
         }
 
         User user = User.builder()
-                .username(signupRequestDto.getUsername())
-                .password(passwordEncoder.encode(signupRequestDto.getPassword()))
-                .firstName(signupRequestDto.getFirstName())
-                .lastName(signupRequestDto.getLastName())
-                .emailAddress(signupRequestDto.getEmail())
+                .username(signupRequest.getUsername())
+                .password(passwordEncoder.encode(signupRequest.getPassword()))
+                .firstName(signupRequest.getFirstName())
+                .lastName(signupRequest.getLastName())
+                .emailAddress(signupRequest.getEmail())
                 .role(UserRole.USER).build();
-        
-        userRepository.save(user);
 
-        return new SignUpResponseDTO(user.getExternalId().toString(), "User signup successful");
+        userRepository.save(user);
     }
 }
-
 
 
 

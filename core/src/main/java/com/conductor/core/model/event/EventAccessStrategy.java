@@ -41,14 +41,7 @@ public enum EventAccessStrategy implements Option {
      * For example, access may be allowed only during a specific
      * time window or duration.
      */
-    TEMPORAL("temporal"),
-
-    /**
-     * Access is granted on a first-come, first-served basis.
-     * Once the available slots are filled, no further participants
-     * can join.
-     */
-    FIRST_COME_FIRST_SERVED("first_come_first_served");
+    CUSTOM("temporal");
 
     private final String name;
 

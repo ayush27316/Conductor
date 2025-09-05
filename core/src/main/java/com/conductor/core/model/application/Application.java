@@ -1,102 +1,217 @@
 package com.conductor.core.model.application;
 
 import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.dispute.Dispute;
+import com.conductor.core.model.event.Event;
+import com.conductor.core.model.file.File;
+import com.conductor.core.model.form.Form;
+import com.conductor.core.model.org.Organization;
+import com.conductor.core.model.ticket.Ticket;
 import com.conductor.core.model.user.User;
+import com.conductor.core.util.Utils;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 
 /**
- * A user submits an {@link Application} for creating resources
- * like {@link com.conductor.core.model.ticket.Ticket} for an
- * {@link com.conductor.core.model.event.Event} or for registering
- * a new {@link com.conductor.core.model.org.Organization }.
+ * {@link Application} is used to model long-lived transaction involved during
+ * acquiring a Resource. An Application can be in multiple states as listed in
+ * {@link ApplicationStatus}. Once application is in 'approved' state this usually
+ * mean granting permissions to a new resource.
+ *
+ * In Conductor we use applications for the following:-
+ * <p>
+ *     <li>A user can apply to an {@link Event}. On approval get's a ticket to the event
+ *          Through event's application organization's can set forms that must filled before
+ *          a user can submit an application, this helps in the approval stage.
+ *     </li>
+ *     <li> A user can register new {@link Organization} by filling a form and submitting an application.
+ *          Conductor team can verify the application, approve it and start the onboarding process.
+ *     </li>
+ *     <li> To manage disputes. Disputes can be caused within an organization, like for payments,
+ *          permissions, or at system level, for example when a user gets blocked to apply for any
+ *          event. Or for an organization to raise a concern. All this is handled by applications.
+ *     </li>
+ * </p>
+ *
+ *  @Note: Helpers methods have been defined to make it easy to work with this entity. It is required
+ *      (but not validated at compile time) for all arguments to be not {@code null} and non-transient.
+ *      Throws {@link PersistenceException} at runtime is not followed. Callee must save the application
+ *      entity only for the changes to persist. And associated entity will be automatically handled based
+ *      on Cascading configurations.
  *
  */
 @Entity
 @Table(name = "applications")
-@Data
-@Builder
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class Application extends BaseEntity {
-
-    @Column(name = "external_id", unique = true, updatable = false, nullable = false)
-    @Builder.Default
-    private String externalId = UUID.randomUUID().toString();
+public class Application extends Resource {
 
     /**
      * An Application has a polymorphic association with resources in the system.
-     * This could either be an {@link com.conductor.core.model.event.Event} or
-     * {@link com.conductor.core.model.org.Organization}
+     * This could either be an {@link Event} or {@link Organization} or a {@link Dispute}.
      */
-    @OneToOne
-    @JoinColumn(name = "resource_id_fk", nullable = false)
-    private Resource resource;
+    @OneToOne(
+            optional = false,
+            fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_resource_id_fk", nullable = false)
+    private Resource targetResource;
 
-    @ManyToOne
+    @ManyToOne(
+            optional = false,
+            fetch = FetchType.LAZY)
     @JoinColumn(name = "submitted_by_user_id_fk", nullable = false)
     private User submittedBy;
 
     @Column(name = "submitted_at", nullable = false)
-    @Builder.Default
     private LocalDateTime submittedAt = LocalDateTime.now();
 
-    @ManyToOne
-    @JoinColumn(name = "processed_by_user_id_fk")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ApplicationStatus applicationStatus = ApplicationStatus.PENDING;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processed_by_id_fk")
     private User processedBy;
 
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    @Column(name = "status", nullable = false)
-    private ApplicationStatus applicationStatus = ApplicationStatus.PENDING;
-
-    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
+    @OneToMany(
+            mappedBy = "application",
+            cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            fetch = FetchType.EAGER)
+    @OrderBy("createdAt ASC")
     private List<ApplicationComment> comments = new ArrayList<>();
 
+//Forms are connected to target resoruces and is fetched from those target
+    //so it does not makes sense to store a reference here.
+//    @ManyToOne
+//    @JoinColumn(name = "form")
+//    private Form form;
 
-    public void addComment(ApplicationComment comment) {
-        comments.add(comment);
-        comment.setApplication(this);
+    /**
+     * Acquiring a resource often requires requester to submit information
+     * that is necessary for the approval stage. Conductor provides {@link Form} 's
+     * that can store form associated with the required information. The response
+     * to this form can be stored here in String format.
+     * TODO: right now any documents that are part of the response are also
+     *  stored in this formResponse. This needs defining a standard for creating
+     *  and parsing form from json schemas. Any third party integration can then
+     *  conform to this standard. This way we can have a separate store for files.
+     *
+     */
+    @Lob
+    @Column(name = "form_response")
+    private String formResponse;
+
+    /**
+     * Creates a new Application.
+     *
+     * @param targetResource target resource of this application. Must not be transient.
+     * @param submittedBy user this application was submitted by. Must not be transient.
+     * @param formResponse optional form response.
+     * @return A new application.
+     */
+    public static Application createNew(
+            Resource targetResource,
+            User submittedBy,
+//            Form form,
+            String formResponse)
+    {
+        Application application = new Application();
+
+        application.setApplicationStatus(ApplicationStatus.PENDING);
+        application.setTargetResource(targetResource);
+        application.setSubmittedBy(submittedBy);
+        application.setSubmittedAt(LocalDateTime.now());
+        application.setFormResponse(formResponse);
+
+//        return Application.builder()
+//                .targetResource(targetResource)
+//                .submittedBy(submittedBy)
+//                .applicationStatus(ApplicationStatus.PENDING)
+////                .form(form)
+//                .formResponse(formResponse)
+//                .build();
+
+        return application;
     }
 
-    public void approve(User approver) {
+
+    /**
+     * Approve the application.
+     * @param approvedBy user that approves this application
+     * @throws IllegalStateException if the application is already in final state.
+     *                               see {@link #isFinalStatus()} method.
+     *
+     */
+    public void approve(User approvedBy) {
         validateStatusTransition(ApplicationStatus.APPROVED);
         this.applicationStatus = ApplicationStatus.APPROVED;
-        this.processedAt = LocalDateTime.now();
-        this.processedBy = approver;
+        processedBy = approvedBy;
+        processedAt = LocalDateTime.now();
     }
 
 
-    public void reject(User rejector) {
-        //we can add default comments for rejection
+    /**
+     * Reject the application. Rejection reason if provided gets added as
+     * a comment on the application.
+     * @param rejectedBy user that rejects this application
+     * @throws IllegalStateException if the application is already in final state.
+     *                               see {@link #isFinalStatus()} method.
+     *
+     */
+    public void reject(User rejectedBy,
+                       String rejectionReason)
+    {
         validateStatusTransition(ApplicationStatus.REJECTED);
         this.applicationStatus = ApplicationStatus.REJECTED;
-        this.processedAt = LocalDateTime.now();
-        this.processedBy = rejector;
+
+        if(Objects.isNull(rejectionReason)){return;}
+
+        ApplicationComment newComment = ApplicationComment.builder()
+                .application(this)
+                .author(rejectedBy)
+                .content(rejectionReason).build();
+        comments.add(newComment);
     }
 
     /**
-     * Cancel the registration (user action)
+     * Cancel the registration. Suppose to be done by user that
+     * submitted the application.
+     * @throws IllegalStateException if the application is already in final state.
+     *                               see {@link #isFinalStatus()} method.
      */
     public void cancel() {
         validateStatusTransition(ApplicationStatus.CANCELLED);
         this.applicationStatus = ApplicationStatus.CANCELLED;
-        this.processedAt = LocalDateTime.now();
+    }
+
+
+    /**
+     * Add a new comment to the application.
+     */
+    public void putComment(User author, String comment)
+    {
+        ApplicationComment newComment =
+                ApplicationComment.builder()
+                        .application(this)
+                        .author(author)
+                        .content(comment)
+                        .build();
+
+        comments.add(newComment);
     }
 
     /**
@@ -120,7 +235,6 @@ public class Application extends BaseEntity {
         return this.applicationStatus != null && this.applicationStatus.isFinalStatus();
     }
 
-
     /**
      * Validate that status transition is allowed
      */
@@ -138,23 +252,9 @@ public class Application extends BaseEntity {
         }
     }
 
-    /**
-     * Pre-persist callback to ensure required fields are set
-     */
     @PrePersist
     protected void prePersist() {
-        if (externalId == null) {
-            externalId = UUID.randomUUID().toString();
-        }
-        if (applicationStatus == null) {
-            applicationStatus = ApplicationStatus.PENDING;
-        }
-        if (submittedAt == null) {
-            submittedAt = LocalDateTime.now();
-        }
+        super.init(ResourceType.APPLICATION);
     }
 
 }
-
-
-

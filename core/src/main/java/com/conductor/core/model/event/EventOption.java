@@ -31,19 +31,7 @@ public enum EventOption implements Option {
      * Participation requires payment.
      * May be combined with approval or distribution strategies.
      */
-    REQUIRES_PAYMENT("requires_payment"),
-
-    /**
-     * Payment is required before booking a ticket.
-     * Even if approval is also required, payment happens first.
-     */
-    REQUIRES_PAYMENT_PRE_BOOKING("requires_payment_pre_booking"),
-
-    /**
-     * Payment is required only after the booking has been approved.
-     * Approval happens first, then payment is collected.
-     */
-    REQUIRES_PAYMENT_POST_APPROVAL("requires_payment_post_approval");
+    REQUIRES_PAYMENT("requires_payment");
 
     private final String name;
 

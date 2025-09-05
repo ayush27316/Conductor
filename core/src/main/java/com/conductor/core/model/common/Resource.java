@@ -2,6 +2,8 @@ package com.conductor.core.model.common;
 
 import com.conductor.core.model.permission.Privilege;
 import jakarta.persistence.*;
+import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -16,21 +18,21 @@ import java.util.UUID;
 @Entity
 @Table(
         indexes = {
-                @Index(name = "idx_resource_guid", columnList = "external_guid")
+                @Index(name = "idx_resource_id", columnList = "external_id")
         }
 )
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Resource extends BaseEntity {
 
     /**
-     * {@code externalGuid} is meant to be used as a globally unique reference
+     * {@code externalId} is meant to be used as a globally unique reference
      * to this resource.
      */
-    @Column(name = "external_guid",
+    @Column(name = "external_id",
             unique = true,
             updatable = false,
             nullable = false)
-    private String externalGuid;
+    private String externalId;
 
     @Column(name = "resource_type",
             updatable = false,
@@ -45,8 +47,8 @@ public abstract class Resource extends BaseEntity {
      *
      */
     public void init(ResourceType resourceType){
-        if(Objects.isNull(externalGuid)){
-            externalGuid = UUID.randomUUID().toString();
+        if(Objects.isNull(externalId)){
+            externalId = UUID.randomUUID().toString();
         }
 
         this.resourceType = resourceType;
@@ -62,12 +64,25 @@ public abstract class Resource extends BaseEntity {
      */
     public String getExternalId()
     {
-        return this.externalGuid;
+        return this.externalId;
     }
-//
-//    //safeCast
-//    static <E extends Resource> Optional<E> safeCast(Class<E> targetResource, Resource source) {
-//        return source;
-//    }
-//
+
+    @SuppressWarnings("unchecked")
+    public static <E extends Resource> Optional<E> safeCast(Class<E> targetResource, Resource source) {
+        if (source == null) {
+            return Optional.empty();
+        }
+
+        // Unwrap Hibernate proxy if necessary
+        Object unproxied = (source instanceof HibernateProxy)
+                ? Hibernate.unproxy(source)
+                : source;
+
+        // Type check
+        if (targetResource.isInstance(unproxied)) {
+            return Optional.of((E) unproxied);
+        } else {
+            return Optional.empty();
+        }
+    }
 }

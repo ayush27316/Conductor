@@ -5,6 +5,8 @@ import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 
 /**
  * Comments on {@link Application} from both users and reviewers
@@ -27,5 +29,15 @@ public class ApplicationComment extends BaseEntity {
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 
 }

@@ -9,6 +9,8 @@ public enum ResourceType implements Option {
     EVENT("event"),
     USER("user"),
     OPERATOR("operator"),
+    FORM("form"),
+    APPLICATION("application"),
     TICKET("ticket");
 
     private final String name;

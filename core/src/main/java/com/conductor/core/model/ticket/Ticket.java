@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 
@@ -38,8 +39,32 @@ public class Ticket extends Resource {
     @Column(nullable = false)
     private TicketStatus status;
 
+    @Column(name = "checked_in_at")
+    private LocalDateTime checkedInAt;
+
+    @Column(name = "tags")
+    private String tags; // comma-separated tags placed by organization
+
     @PrePersist
     public void prePersist() {
         super.init(ResourceType.TICKET);
     }
+
+    /**
+     * Creates a new Ticket object.
+     * @param user user to which this ticket will be assigned must not transient or null.
+     * @param event event to which this ticket can grant access. Must not be null or transient.
+     * @return a new ticket
+     */
+    public static Ticket creatNewTicket(User user, Event event)
+    {
+        Ticket ticket = Ticket.builder()
+                .user(user)
+                .event(event)
+                .status(TicketStatus.IDLE)
+                .build();
+        return ticket;
+    }
+
+
 }

@@ -58,19 +58,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     String userExternalId = jwtUtil.getExternalId(token);
                     /*
-                    * giving permissions and roles out promotes front-end builder
-                    * to only present options that are relevant to this user
-                    * */
+                     * giving permissions and roles out promotes front-end builder
+                     * to only present options that are relevant to this user
+                     * */
                     //List<PermissionDTO> permissionDTOS = jwtUtil.getPermissions(token);
                     //String userRole = jwtUtil.getUserRole(token);
 
                     if (userExternalId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        User userPrincipal = userRepository.findByExternalGuid(userExternalId).get();
+                        User userPrincipal = userRepository.findByExternalId(userExternalId).get();
 
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(
-                                    userPrincipal, 
-                                    null,
+                                        userPrincipal,
+                                        null,
                                         userPrincipal.getAuthorities()
                                 );
 

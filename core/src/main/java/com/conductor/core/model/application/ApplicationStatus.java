@@ -1,5 +1,6 @@
 package com.conductor.core.model.application;
 
+import com.conductor.core.model.common.Option;
 import com.conductor.core.model.event.Event;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -15,7 +16,7 @@ import java.util.stream.Stream;
  * These statuses indicate the lifecycle of an application
  * from submission to a final decision.
  */
-public enum ApplicationStatus {
+public enum ApplicationStatus implements Option {
 
     /**
      * Application has been submitted but not yet reviewed or confirmed.
@@ -37,37 +38,12 @@ public enum ApplicationStatus {
      */
     CANCELLED("cancelled");
 
-    private final String label;
+    private final String name;
 
-    ApplicationStatus(String label) {
-        this.label = label;
+    ApplicationStatus(String name) {
+        this.name = name;
     }
 
-    @JsonValue
-    public String getLabel() {
-        return label;
-    }
-
-    @JsonCreator
-    public static ApplicationStatus fromValue(String value) {
-        for (ApplicationStatus status : values()) {
-            if (status.label.equalsIgnoreCase(value)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Unknown application status: " + value);
-    }
-
-
-
-    /**
-     * @return a comma-separated string of all reservation status options
-     */
-    public static String getAllOptions() {
-        return Arrays.stream(ApplicationStatus.values())
-                .map(ApplicationStatus::getLabel)
-                .collect(Collectors.joining(", "));
-    }
 
     public boolean isFinalStatus() {
         return this == APPROVED || this == REJECTED || this == CANCELLED;
@@ -78,5 +54,10 @@ public enum ApplicationStatus {
      */
     public boolean canBeProcessed() {
         return this == PENDING;
+    }
+
+    @Override
+    public String getName() {
+        return this.name;
     }
 }

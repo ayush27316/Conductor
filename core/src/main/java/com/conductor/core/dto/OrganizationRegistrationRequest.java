@@ -33,7 +33,6 @@ public class OrganizationRegistrationRequest {
     @Size(max = 200, message = "Website URL must be at most 200 characters.")
     private String email;
 
-
     @Schema(description =
             """
                 Tags related to the organization. If the organization is

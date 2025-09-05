@@ -1,8 +1,10 @@
 package com.conductor.core.model.user;
 
+import com.conductor.core.model.application.Application;
 import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.permission.Permission;
+import com.conductor.core.model.ticket.Ticket;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -11,9 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Represents a system user that can authenticate and interact with the platform.
@@ -54,6 +54,11 @@ public class User extends Resource implements UserDetails {
     @JsonManagedReference
     private List<Permission> permissions;
 
+//    @OneToMany(mappedBy = "submittedBy", fetch = FetchType.LAZY ,cascade = CascadeType.PERSIST)
+//    private List<Application> applications = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private List<Ticket> tickets = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

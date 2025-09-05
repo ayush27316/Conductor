@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Clear screen
+clear
+
+# Check if -d flag is provided
+if [ "$1" == "-d" ]; then
+  echo "Deleting contents of ./data..."
+  rm -rf ./data/*
+fi
+
 # Go up one directory
 cd ..
 
