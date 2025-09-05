@@ -9,6 +9,7 @@ import com.conductor.core.model.ticket.TicketStatus;
 import com.conductor.core.model.user.User;
 import com.conductor.core.repository.EventRepository;
 import com.conductor.core.repository.TicketRepository;
+import com.conductor.core.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -26,11 +27,12 @@ public class TicketPurchaseService {
     private final EventRepository eventRepository;
     private final TicketRepository ticketRepository;
     private final QrCodeService qrCodeService;
+    private final UserRepository userRepository;
 
     @Transactional
     public TicketDTO buyTicketByEventExternalId(String eventExternalId, String tagsCsv) {
         Event event = eventRepository.findByExternalId(eventExternalId)
-                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+                .orElseThrow(() -> new EventNotFoundException());
 
         // If REQUIRES_APPROVAL present, disallow direct purchase
         if (event.getOptions() != null && event.getOptions().contains(EventOption.REQUIRES_APPROVAL)) {
@@ -45,7 +47,8 @@ public class TicketPurchaseService {
                 .status(TicketStatus.IDLE)
                 .tags(tagsCsv)
                 .build();
-        ticketRepository.save(ticket);
+        user.getTickets().add(ticket);
+        userRepository.save(user);
 
         return TicketDTO.builder()
                 .eventExternalId(event.getExternalId())

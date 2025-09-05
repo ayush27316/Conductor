@@ -28,8 +28,7 @@ public class ApplicationMapper {
                 .processedByUserExternalId(application.getProcessedBy().getExternalId())
                 .processedAt(application.getProcessedAt())
                 .comments(commentDTOs)
-                .applicationForm(application.getApplicationForm().getFormSchema())
-                .applicationFormResponse(application.getApplicationFormResponse())
+                .applicationFormResponse(application.getFormResponse())
                 .build();
         if(application.getTargetResource().getResourceType().equals(ResourceType.EVENT))
         {

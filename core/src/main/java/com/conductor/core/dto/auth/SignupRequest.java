@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SignUpRequestDTO {
+public class SignupRequest {
     @NotBlank(message = "Username is required")
     @Size(max=50, message = "Username size exceeded")
     private String username;

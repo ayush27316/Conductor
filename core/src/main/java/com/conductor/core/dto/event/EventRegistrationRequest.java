@@ -25,8 +25,9 @@ import jakarta.validation.constraints.*;
 public class EventRegistrationRequest {
 
     @NotBlank(message = "Organization Id is required.")
-    @Size(min = 36, max = 36, message = "Organization Id must be a valid UUID (36 characters).")
+    //@Size(max = 36, message = "Organization Id must be a valid UUID (36 characters).")
     @Schema(description = "Id of the organization under which this event will be registered")
+    @JsonProperty("organization_id")
     private String organizationId;
 
     @NotBlank(message = "Event name is required")
@@ -34,7 +35,7 @@ public class EventRegistrationRequest {
     @Schema(description = "Name of the event")
     private String name;
 
-    @NotBlank(message = "Event format is required")
+    @NotNull(message = "Event format is required")
     @Schema(implementation = EventFormat.class)
     private EventFormat format;
 
@@ -56,6 +57,7 @@ public class EventRegistrationRequest {
     @JsonProperty("total_tickets_to_be_sold")
     private int totalTicketsToBeSold;
 
+    //issue here not taking multiple options
     @Schema(
             description = "Option available for event",
             implementation = EventOption.class

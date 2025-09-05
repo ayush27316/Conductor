@@ -81,7 +81,7 @@ public class Application extends Resource {
     private ApplicationStatus applicationStatus = ApplicationStatus.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @Column(name = "processed_by")
+    @JoinColumn(name = "processed_by_id_fk")
     private User processedBy;
 
     @Column(name = "processed_at")

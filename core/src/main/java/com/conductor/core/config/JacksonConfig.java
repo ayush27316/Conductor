@@ -10,6 +10,14 @@ import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
 
+/**
+ * Serializes all enums and options to lower case strings.
+ * Deserialization happens through global spring configuration
+ * and is set to be case-insensitive mapping.
+ *
+ * might create problems if an option backed by no enums
+ * then it might cause problem.
+ */
 @Configuration
 public class JacksonConfig {
 

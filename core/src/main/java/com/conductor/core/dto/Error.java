@@ -20,6 +20,8 @@ public  class Error {
     @JsonProperty("error")
     private String error;
 
+    private boolean success;
+
     @Schema(description = "Detailed error message",
             example = "This event does not accept applications")
     @JsonProperty("message")

@@ -40,18 +40,10 @@ public enum ApplicationStatus implements Option {
 
     private final String name;
 
-    ApplicationStatus(String label) {
+    ApplicationStatus(String name) {
         this.name = name;
     }
 
-    /**
-     * @return a comma-separated string of all reservation status options
-     */
-    public static String getAllOptions() {
-        return Arrays.stream(ApplicationStatus.values())
-                .map(ApplicationStatus::getLabel)
-                .collect(Collectors.joining(", "));
-    }
 
     public boolean isFinalStatus() {
         return this == APPROVED || this == REJECTED || this == CANCELLED;

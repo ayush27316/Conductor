@@ -40,7 +40,7 @@ public class OrganizationRegistrationController {
     }
 
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+//    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/applications/{application-id}/approve")
     public ResponseEntity<?> approveApplication(
             @PathVariable("application-id")
@@ -57,7 +57,8 @@ public class OrganizationRegistrationController {
         return ResponseEntity.ok().build();
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+
+    //    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/applications/{application-id}/reject")
     public ResponseEntity<?> rejectApplication(
             @PathVariable("application-id")

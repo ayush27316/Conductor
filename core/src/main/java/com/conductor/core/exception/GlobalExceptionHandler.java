@@ -1,16 +1,14 @@
 package com.conductor.core.exception;
 
 import com.conductor.core.dto.Error;
-import com.conductor.core.dto.ResponseDTO;
-import com.conductor.core.model.common.Option;
-import com.conductor.core.model.event.EventOption;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,10 +18,7 @@ import org.springframework.web.context.request.WebRequest;
 import java.nio.file.AccessDeniedException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -258,88 +253,157 @@ public class GlobalExceptionHandler {
                 return "Error";
         }
     }
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+
     @ExceptionHandler(InvalidServiceRequest.class)
-    public ResponseDTO<?> handleInvalidServiceRequest(
+    public ResponseEntity<Error> handleInvalidServiceRequest(
             InvalidServiceRequest ex, WebRequest request) {
 
-        return ResponseDTO.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
+         Error error = Error.builder()
+                .error(HttpStatus.BAD_REQUEST.toString())
                 .success(false)
                 .message("Invalid service request: " + ex.getMessage())
-                .description("Path: " + extractPath(request))
-                .timeStamp(LocalDateTime.now().toString())
+                .timestamp(LocalDateTime.now().toString())
                 .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseDTO<?> handleInvalidServiceRequest(
+    public ResponseEntity<Error> handleInvalidServiceRequest(
             AccessDeniedException ex, WebRequest request) {
 
-        return ResponseDTO.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
+        Error error = Error.builder()
+                .error(HttpStatus.UNAUTHORIZED.toString())
                 .success(false)
                 .message("Invalid service request: " + ex.getMessage())
-                .description("Path: " + extractPath(request))
-                .timeStamp(LocalDateTime.now().toString())
+                .timestamp(LocalDateTime.now().toString())
                 .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+
     }
 
-
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler({SecurityException.class, TokenNotValidException.class})
-    public ResponseDTO<?> handleUnauthorizedExceptions(
+    public ResponseEntity<Error> handleUnauthorizedExceptions(
             Exception ex, WebRequest request) {
 
         String message = ex instanceof TokenNotValidException
                 ? "Token not valid: " + ex.getMessage()
                 : "Unauthorized access: " + ex.getMessage();
 
-        return ResponseDTO.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
+        Error error = Error.builder()
+                .error(HttpStatus.UNAUTHORIZED.toString())
                 .success(false)
                 .message(message)
-                .description("Path: " + extractPath(request))
-                .timeStamp(LocalDateTime.now().toString())
+                .timestamp(LocalDateTime.now().toString())
                 .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+
     }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Error> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        Throwable cause = ex.getCause();
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseDTO<?> handleValidationExceptions(
-            MethodArgumentNotValidException ex, WebRequest request) {
+        if (cause instanceof InvalidFormatException ife) {
+            Class<?> targetType = ife.getTargetType();
 
-        List<String> errors = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.toList());
+            if (targetType.isEnum()) {
+                Object[] enumConstants = targetType.getEnumConstants();
 
-        return ResponseDTO.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
+                Map<String, Object> details = new HashMap<>();
+                details.put("invalidValue", ife.getValue());
+                details.put("acceptedValues", Arrays.stream(enumConstants)
+                        .map(e -> e.toString().toLowerCase())
+                        .toList());
+
+                Error errorResponse = Error.builder()
+                        .error("Bad Request")
+                        .success(false)
+                        .message("Invalid value for enum " + targetType.getSimpleName())
+                        .timestamp(Instant.now().toString())
+                        .details(details)
+                        .build();
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+        }
+
+        // fallback error
+        Error fallbackError = Error.builder()
+                .error("Bad Request")
                 .success(false)
-                .message("Validation failed")
-                .description(String.join(", ", errors) + " | Path: " + extractPath(request))
-                .timeStamp(LocalDateTime.now().toString())
+                .message("Malformed JSON request")
+                .timestamp(Instant.now().toString())
+                .details(Map.of("cause", ex.getMostSpecificCause().getMessage()))
                 .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(fallbackError);
     }
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+//
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    public ResponseEntity<Error> handleValidationExceptions(
+//            MethodArgumentNotValidException ex, WebRequest request) {
+//
+//        List<String> errors = ex.getBindingResult()
+//                .getFieldErrors()
+//                .stream()
+//                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+//                .collect(Collectors.toList());
+//
+//        Error error = Error.builder()
+//                .error(HttpStatus.BAD_REQUEST.toString())
+//                .success(false)
+//                .message("Validation failed")
+//                .timestamp(LocalDateTime.now().toString())
+//                .build();
+//
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+//
+//    }
+
+    @ExceptionHandler(OrganizationNotFound.class)
+    public ResponseEntity<Error> handleOrganizationNotFound(
+            OrganizationNotFound ex, WebRequest request) {
+
+        Error error = Error.builder()
+                .error(HttpStatus.NOT_FOUND.toString())
+                .success(false)
+                .message("Organization not found")
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+
+    }
+
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseDTO<?> handleNoSuchElement(
+    public ResponseEntity<Error> handleNoSuchElement(
             NoSuchElementException ex, WebRequest request) {
 
-        return ResponseDTO.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
+        Error error = Error.builder()
+                .error(HttpStatus.BAD_REQUEST.toString())
                 .success(false)
                 .message("Invalid request data")
-                .description("The requested value was not found: " + ex.getMessage() + " | Path: " + extractPath(request))
-                .timeStamp(LocalDateTime.now().toString())
+                .timestamp(LocalDateTime.now().toString())
                 .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+
     }
 
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<Error> handleNoSuchElement(
+            AuthorizationDeniedException ex, WebRequest request) {
+
+        Error error = Error.builder()
+                .error(HttpStatus.UNAUTHORIZED.toString())
+                .success(false)
+                .message("Access Denied")
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+
+    }
     private String extractPath(WebRequest request) {
         return request.getDescription(false).replace("uri=", "");
     }

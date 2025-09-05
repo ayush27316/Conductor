@@ -32,7 +32,7 @@ public class EventRegistrationAndModificationService{
     private final ResourceAuditRepository resourceAuditRepository;
 
     @Transactional
-    public boolean registerEvent(User user,
+    public void registerEvent(User user,
                                  EventRegistrationRequest request) {
 
         Organization org = organizationRepository.findByExternalId(request.getOrganizationId())
@@ -48,7 +48,6 @@ public class EventRegistrationAndModificationService{
 
         eventRepository.save(event);
         resourceAuditRepository.save(audit);
-        return true;
     }
 
 

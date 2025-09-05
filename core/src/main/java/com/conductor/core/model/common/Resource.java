@@ -2,6 +2,8 @@ package com.conductor.core.model.common;
 
 import com.conductor.core.model.permission.Privilege;
 import jakarta.persistence.*;
+import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -16,7 +18,7 @@ import java.util.UUID;
 @Entity
 @Table(
         indexes = {
-                @Index(name = "idx_resource_guid", columnList = "external_guid")
+                @Index(name = "idx_resource_id", columnList = "external_id")
         }
 )
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -64,10 +66,23 @@ public abstract class Resource extends BaseEntity {
     {
         return this.externalId;
     }
-//
-//    //safeCast
-//    static <E extends Resource> Optional<E> safeCast(Class<E> targetResource, Resource source) {
-//        return source;
-//    }
-//
+
+    @SuppressWarnings("unchecked")
+    public static <E extends Resource> Optional<E> safeCast(Class<E> targetResource, Resource source) {
+        if (source == null) {
+            return Optional.empty();
+        }
+
+        // Unwrap Hibernate proxy if necessary
+        Object unproxied = (source instanceof HibernateProxy)
+                ? Hibernate.unproxy(source)
+                : source;
+
+        // Type check
+        if (targetResource.isInstance(unproxied)) {
+            return Optional.of((E) unproxied);
+        } else {
+            return Optional.empty();
+        }
+    }
 }

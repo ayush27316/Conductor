@@ -54,8 +54,8 @@ public class User extends Resource implements UserDetails {
     @JsonManagedReference
     private List<Permission> permissions;
 
-    @OneToMany(mappedBy = "submittedBy", fetch = FetchType.LAZY ,cascade = CascadeType.PERSIST)
-    private List<Application> applications = new ArrayList<>();
+//    @OneToMany(mappedBy = "submittedBy", fetch = FetchType.LAZY ,cascade = CascadeType.PERSIST)
+//    private List<Application> applications = new ArrayList<>();
 
     @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Ticket> tickets = new ArrayList<>();

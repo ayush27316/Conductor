@@ -4,6 +4,7 @@ import com.conductor.core.dto.OrganizationRegistrationRequest;
 import com.conductor.core.exception.OrganizationRegistrationException;
 import com.conductor.core.manager.ApplicationManager;
 import com.conductor.core.model.application.Application;
+import com.conductor.core.model.common.Resource;
 import com.conductor.core.model.common.ResourceType;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.user.UserRole;
@@ -13,6 +14,7 @@ import com.conductor.core.model.user.User;
 import com.conductor.core.repository.*;
 import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.Hibernate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,7 +82,8 @@ public class OrganizationApplicationService {
         Application application =
                 applicationManager.approveApplication(approvedBy, applicationExternalId);
 
-        initiateOrganizationOnboarding((Organization) application.getTargetResource());
+        Resource target = application.getTargetResource();
+        initiateOrganizationOnboarding(Resource.safeCast(Organization.class,target).get());
     }
 
     @Transactional(rollbackFor = Exception.class)

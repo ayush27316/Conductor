@@ -67,7 +67,7 @@ public class Permission extends BaseEntity {
      * with the provided map.
      */
     public Map<Privilege, AccessLevel> getPermission(){
-        return permission.isEmpty() ? Map.copyOf(permission): null;
+        return permission.isEmpty() ? Map.copyOf(permission): new HashMap<>();
     }
 
     public void setPermission(Map<Privilege, AccessLevel> newPermission){

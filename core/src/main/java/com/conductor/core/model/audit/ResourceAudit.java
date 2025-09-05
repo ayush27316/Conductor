@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * Resource Audit is used to maintain long states for 'a' resource.
@@ -46,4 +47,12 @@ public class ResourceAudit extends BaseEntity {
     @Column(name = "snapshot", nullable = false)
     private byte[] snapshot;
 
+    @PrePersist
+    public void doThis()
+    {
+        if (Objects.isNull(snapshot))
+        {
+            snapshot = new byte[5];
+
+        }    }
 }

@@ -221,6 +221,7 @@ public class EventApplicationService {
      *
      * @throws ApplicationRequestFailedException    for all exceptions cause due to database operations failure.
      */
+    @Transactional
     public List<ApplicationDTO> getEventApplications(String eventExternalId) {
 
         return applicationManager.getAllApplicationsForAResource(eventExternalId)

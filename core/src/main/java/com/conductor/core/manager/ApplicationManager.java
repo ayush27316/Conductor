@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.function.Consumer;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.Optional;
  * and managing forms or comments for an applications. The operations
  * are also persisted.
  */
+@Component
 @RequiredArgsConstructor
 public class ApplicationManager {
 
@@ -70,10 +72,11 @@ public class ApplicationManager {
 //                form,
                 formResponse);
 
-        user.getApplications().add(application);
+//        user.getApplications().add(application);
 
         try {
-            userRepository.save(user);
+//            userRepository.save(user);
+            applicationRepository.save(application);
         }catch (Exception e) {
             throw new ApplicationRequestFailedException("Application request failed",e);
         }

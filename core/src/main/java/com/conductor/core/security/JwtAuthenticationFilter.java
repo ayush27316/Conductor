@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     //String userRole = jwtUtil.getUserRole(token);
 
                     if (userExternalId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        User userPrincipal = userRepository.findByExternalGuid(userExternalId).get();
+                        User userPrincipal = userRepository.findByExternalId(userExternalId).get();
 
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(
