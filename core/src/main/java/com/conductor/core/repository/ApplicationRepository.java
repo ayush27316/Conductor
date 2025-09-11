@@ -2,8 +2,8 @@ package com.conductor.core.repository;
 
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.application.ApplicationStatus;
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -1,16 +1,18 @@
 package com.conductor.core.controller.api.event;
 
-import com.conductor.core.dto.event.EventRegistrationRequest;
-import com.conductor.core.exception.EventRegistrationFailedException;
+import com.conductor.core.dto.event.EventModification;
 import com.conductor.core.model.user.User;
 import com.conductor.core.service.EventRegistrationAndModificationService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 
 @RestController
@@ -24,23 +26,24 @@ public class EventRegistrationAndModificationController {
     @PostMapping("/register")
     public ResponseEntity<?> registerEvent(
             Authentication auth,
-            @Valid @RequestBody EventRegistrationRequest request) {
+            @Valid @RequestBody EventModification request) {
 
-        eventService.registerEvent((User) auth.getPrincipal(),request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        String applicationId = eventService.registerEvent((User) auth.getPrincipal(),request);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("event-id", applicationId));
     }
 
-//
-//    @PreAuthorize("hasRole('USER')")
-//    @GetMapping
-//    public ResponseEntity<List<EventDTO>> getAllEvents(){
-//
-//        try{
-//            List<EventDTO> eventDTOList = eventService.getAllEvents();
-//            return ResponseEntity.ok(eventDTOList);
-//        }catch (RuntimeException e){
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-//        }
-//
-//    }
+    //@PreAuthorize()
+    @PostMapping("/{event-id}/modify")
+    public ResponseEntity<?> modifyEvent(
+            @PathVariable("event-id")
+            @NotBlank(message = "Event Id is required")
+            @Size(min = 36, max = 36)
+            String eventExternalId,
+            @Valid @RequestBody EventModification request,
+            Authentication auth)
+    {
+        eventService.modifyEvent((User) auth.getPrincipal(), eventExternalId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }

@@ -1,7 +1,7 @@
 package com.conductor.core.model.audit;
 
-import com.conductor.core.model.common.BaseEntity;
-import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.BaseEntity;
+import com.conductor.core.model.Resource;
 import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;

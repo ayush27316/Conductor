@@ -1,20 +1,21 @@
 package com.conductor.core.service;
 
-import com.conductor.core.dto.OrganizationRegistrationRequest;
+import com.conductor.core.dto.OrganizationApplicationRequest;
 import com.conductor.core.exception.OrganizationRegistrationException;
 import com.conductor.core.manager.ApplicationManager;
 import com.conductor.core.model.application.Application;
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.permission.Permission;
+import com.conductor.core.model.user.Operator;
 import com.conductor.core.model.user.UserRole;
 import com.conductor.core.model.org.Organization;
 import com.conductor.core.model.org.OrganizationAudit;
 import com.conductor.core.model.user.User;
 import com.conductor.core.repository.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hibernate.Hibernate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,15 +35,14 @@ public class OrganizationApplicationService {
     private final OrganizationAuditRepository auditRepository;
     private final UserRepository userRepository;
     private final ApplicationManager applicationManager;
-
+    private final OperatorRepository operatorRepository;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-
     @Transactional
-    public String register(
+    public String apply(
             User submittedBy,
-            OrganizationRegistrationRequest request) {
+            OrganizationApplicationRequest request) {
 
         //check if organization name already exist
         if(!organizationRepository.findByName(request.getName()).isEmpty()){
@@ -62,14 +62,20 @@ public class OrganizationApplicationService {
         try{
             organizationRepository.save(organization);
         }catch (Exception e) {
-            throw new OrganizationRegistrationException("Organization registration failed." + e.getMessage(), e);
+            throw new RuntimeException("Organization registration failed." + e.getMessage(), e);
         }
 
-        Application application = applicationManager.registerApplication(
-                submittedBy,
-                organization,
-                null
-                );
+        Application application = null;
+
+        try {
+            application = applicationManager.registerApplication(
+                    submittedBy,
+                    organization,
+                    objectMapper.writeValueAsString(request)
+                    );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
         return application.getExternalId();
     }
@@ -136,6 +142,13 @@ public class OrganizationApplicationService {
         user.setPermissions(List.of(permission));
 
         userRepository.save(user);
+
+        Operator operator = Operator.builder()
+                .user(user)
+                .organization(org)
+                .build();
+        operatorRepository.save(operator);
+
         // TODO: Implement async call to email service to send credentials
         // transactions should be maintained if emailing fails
     }
@@ -144,6 +157,10 @@ public class OrganizationApplicationService {
      * Get all organizations waiting for approval
      */
     public List<Application> getAllOrganizationsWaitingForApproval() {
-        return  applicationManager.getAllPendingApplicationsOfResourceType(ResourceType.ORGANIZATION);
+        List<Application> applications =
+                applicationManager.getAllPendingApplicationsOfResourceType(ResourceType.ORGANIZATION);
+
+        return  null;
+
     }
 }

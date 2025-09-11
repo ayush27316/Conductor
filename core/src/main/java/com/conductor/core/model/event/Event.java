@@ -1,7 +1,7 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.form.Form;
 import com.conductor.core.model.org.Organization;
 import jakarta.persistence.*;
@@ -80,7 +80,7 @@ public class Event extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.EVENT);
+        super.init(ResourceType.EVENT,null);
     }
 
     public boolean hasEnded()

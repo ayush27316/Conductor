@@ -1,7 +1,7 @@
 package com.conductor.core.model.user;
 
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.org.Organization;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,17 +21,17 @@ import lombok.*;
 @Table(name = "operators")
 public class Operator extends Resource {
 
-    @OneToOne
+    @OneToOne(optional = false, fetch =FetchType.EAGER)
     @JoinColumn(name = "user_id_fk")
     private User user;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "organization_id_fk")
     private Organization organization;
 
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.OPERATOR);
+        super.init(ResourceType.OPERATOR, null);
     }
 }

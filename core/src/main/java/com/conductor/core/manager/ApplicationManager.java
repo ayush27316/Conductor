@@ -3,8 +3,8 @@ package com.conductor.core.manager;
 
 import com.conductor.core.exception.*;
 import com.conductor.core.model.application.ApplicationStatus;
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.repository.*;
 import com.conductor.core.util.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,7 +39,6 @@ public class ApplicationManager {
      *
      * @param user           user creating the application (must not be {@code null} or transient ).
      * @param targetResource resource being applied to (must not be {@code null} or transient ).
-     * //@param form          form to attach to the application must not be {@code null} or transient.
      * @param formResponse    optional response of the form. Must be validated by the callee.
      *
      * @throws IllegalArgumentException             if any argument is {@code null}
@@ -52,10 +51,6 @@ public class ApplicationManager {
             Resource targetResource,
             String formResponse
     ){
-        //no need to check as an exception will be thrown when
-        //trying to persist PersistenceException.
-        //        notNull(user, "User cannot be null");
-//        notNull(targetResource, "Target resource cannot be null");
 
         // Check if user already has an application for this resource
         if (applicationRepository.existsBySubmittedByAndTargetResource(
@@ -69,13 +64,8 @@ public class ApplicationManager {
         Application application = Application.createNew(
                 targetResource,
                 user,
-//                form,
                 formResponse);
-
-//        user.getApplications().add(application);
-
         try {
-//            userRepository.save(user);
             applicationRepository.save(application);
         }catch (Exception e) {
             throw new ApplicationRequestFailedException("Application request failed",e);

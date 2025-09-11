@@ -1,6 +1,6 @@
 package com.conductor.core.model.permission;
 
-import com.conductor.core.model.common.Option;
+import com.conductor.core.model.Option;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;

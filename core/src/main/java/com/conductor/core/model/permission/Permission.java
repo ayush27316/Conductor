@@ -1,14 +1,11 @@
 package com.conductor.core.model.permission;
 
-import com.conductor.core.model.common.BaseEntity;
-import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.BaseEntity;
+import com.conductor.core.model.Resource;
 import com.conductor.core.model.user.User;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Type;
 
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -18,7 +15,7 @@ import java.util.Map;
  * Represents a single permission grant for a user on a specific resourceType.
  *
  * Who can change a users' permission. Firs thing is that only operators
- * have persmissions.
+ * have permissions.
  */
 @Entity
 @Table(name = "user_permissions",
@@ -39,7 +36,7 @@ public class Permission extends BaseEntity {
     @JsonBackReference
     private User user;
 
-    @ManyToOne
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "resource_id_fk", nullable = false)
     private Resource resource;
 
@@ -52,18 +49,17 @@ public class Permission extends BaseEntity {
     @Column(name = "granted_at", nullable = true)
     private ZonedDateTime grantedAt;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "granted_by_user_id_fk")
     private User grantedBy;
 
     @Column(name = "expires_at")
     private ZonedDateTime expiresAt;
 
-
     /**
      *
      * @return An immutable reference to Permissions map. To change the permission
-     * you must use {@code setPermission(...)} method which replaces the existing map
+     * you must use {@link #setPermission(Map)} method which replaces the existing map
      * with the provided map.
      */
     public Map<Privilege, AccessLevel> getPermission(){

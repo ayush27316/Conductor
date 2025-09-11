@@ -1,6 +1,6 @@
 package com.conductor.core.model.permission;
 
-import com.conductor.core.model.common.Resource;
+import com.conductor.core.model.Resource;
 import com.conductor.core.model.org.Organization;
 
 import java.util.List;

@@ -9,14 +9,18 @@ import com.conductor.core.util.ApplicationMapper;
 import com.conductor.core.util.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.conductor.core.model.application.Application;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.user.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -92,9 +96,12 @@ public class EventApplicationService {
             throw new ApplicationRequestFailedException("This event is no longer accepting applications");
         }
 
-        // TODO: check if the  current user has paid for this event
-
+        if(!Objects.isNull(event.getApplicationForm())) {
+            Utils.notNull(formResponse, "Response to the form is required");
+        }
         // TODO: validate form response
+
+        // TODO: check if the  current user has paid for this event
 
         Application application = applicationManager.registerApplication(
                 user,
@@ -228,5 +235,14 @@ public class EventApplicationService {
                 .stream()
                 .map(ApplicationMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    private final FileService fileService;
+
+    @Transactional
+    public void storeFile(MultipartFile file, String eventApplicationExternalId, User user) {
+        User uploadedBy = userRepository.findById(user.getId()).orElseThrow(()->new RuntimeException("User not found"));
+        Application application = applicationManager.findApplication(eventApplicationExternalId);
+        fileService.storeFile(file, Optional.of(application), uploadedBy);
     }
 }

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -18,11 +19,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApplicationDTO {
 
-    @JsonProperty("organization_id")
-    private String organizationExternalId;
-
-    @JsonProperty("event_id")
-    private String eventExternalId;
+    @JsonProperty("id")
+    private String externalId;
 
     @JsonProperty("submitted_by_user_id")
     private String submittedByUserExternalId;
@@ -48,6 +46,10 @@ public class ApplicationDTO {
     @JsonProperty("application_form_response")
     private String applicationFormResponse;
 
+    //keys are names of the file and values are external id
+    @JsonProperty("file_metadata")
+    private Map<String,String> fileMetada;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -55,6 +57,7 @@ public class ApplicationDTO {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Comment {
 
+        //should be username
         @JsonProperty("author_id")
         private String authorExternalId;
 

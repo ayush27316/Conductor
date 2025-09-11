@@ -1,12 +1,11 @@
 package com.conductor.core.security;
 
-import com.conductor.core.model.common.Option;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Option;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.permission.Privilege;
 import com.conductor.core.model.user.User;
-import com.conductor.core.util.Pair;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import java.io.Serializable;

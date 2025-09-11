@@ -1,6 +1,6 @@
 package com.conductor.core.model.user;
 
-import com.conductor.core.model.common.Option;
+import com.conductor.core.model.Option;
 import com.conductor.core.model.permission.AccessLevel;
 
 /**
@@ -30,13 +30,20 @@ public enum UserRole implements Option {
 
     /**
      *<p>
-     *  USER  has read-only access to resources that are publicly
-     *  accessible i.e. resources whose url begins with "/public".
-     *  This role is also useful as placeholder for signifying that
+     *  USER  has read-only access to resources that are does not
+     *  authorization. This role is also useful as placeholder for signifying that
      *  only a logged-in user has access to a given  resources.
      * </p>
      */
-    USER("USER");
+    USER("USER"),
+
+    /**
+     *<p>
+     *  PUBLIC  has read-only access to resources that are publicly
+     *  accessible i.e. resources whose url begins with "/public.."
+     * </p>
+     */
+    PUBLIC("PUBLIC");
 
     private final String name;
 

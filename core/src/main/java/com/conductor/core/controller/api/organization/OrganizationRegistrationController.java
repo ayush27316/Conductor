@@ -18,19 +18,19 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/organizations")
+@RequestMapping("/api/v1/organizations")
 @RequiredArgsConstructor
 public class OrganizationRegistrationController {
 
     private final OrganizationApplicationService organizationApplicationService;
 
-    @PostMapping("/register")
+    @PostMapping("/apply")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<?> register(
+    public ResponseEntity<?> apply(
             Authentication auth,
-            @Valid @RequestBody OrganizationRegistrationRequest request) {
+            @Valid @RequestBody OrganizationApplicationRequest request) {
 
-        String applicationExternalId = organizationApplicationService.register(
+        String applicationExternalId = organizationApplicationService.apply(
                 (User) auth.getPrincipal(),
                 request);
 
@@ -114,9 +114,9 @@ public class OrganizationRegistrationController {
 
     @GetMapping("/applications/pending")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Application>> getAllPendingOrganizations() {
+    public ResponseEntity<List<ApplicationDTO>> getAllPendingApplications() {
         List<Application> pendingRegistrations =
                 organizationApplicationService.getAllOrganizationsWaitingForApproval();
-        return ResponseEntity.ok(pendingRegistrations);
+        return ResponseEntity.ok(null);
     }
 }

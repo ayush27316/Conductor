@@ -24,26 +24,6 @@ import java.util.stream.Collectors;
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-//
-//    @ExceptionHandler(InvalidFormatException.class)
-//    public ResponseEntity<String> handleInvalidFormat(InvalidFormatException ex) {
-//        Class<?> targetType = ex.getTargetType();
-//
-//        if (Option.class.isAssignableFrom(targetType)) {
-//
-//            @SuppressWarnings("unchecked")
-//            String allowedValues = Option.getAllOptions(targetType.getClass());
-//
-//            String message = String.format(
-//                    "Invalid value '%s' for %s. Allowed values are: %s",
-//                    ex.getValue(), targetType.getSimpleName(), allowedValues
-//            );
-//            return ResponseEntity.badRequest().body(message);
-//        }
-//
-//        // fallback for other types
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getOriginalMessage());
-//    }
 
     /**
      * Handle EventNotFoundException - when an event cannot be found.
@@ -340,27 +320,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(fallbackError);
     }
 
-//
-//    @ExceptionHandler(MethodArgumentNotValidException.class)
-//    public ResponseEntity<Error> handleValidationExceptions(
-//            MethodArgumentNotValidException ex, WebRequest request) {
-//
-//        List<String> errors = ex.getBindingResult()
-//                .getFieldErrors()
-//                .stream()
-//                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-//                .collect(Collectors.toList());
-//
-//        Error error = Error.builder()
-//                .error(HttpStatus.BAD_REQUEST.toString())
-//                .success(false)
-//                .message("Validation failed")
-//                .timestamp(LocalDateTime.now().toString())
-//                .build();
-//
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-//
-//    }
 
     @ExceptionHandler(OrganizationNotFound.class)
     public ResponseEntity<Error> handleOrganizationNotFound(
@@ -408,3 +367,45 @@ public class GlobalExceptionHandler {
         return request.getDescription(false).replace("uri=", "");
     }
 }
+//
+//    @ExceptionHandler(InvalidFormatException.class)
+//    public ResponseEntity<String> handleInvalidFormat(InvalidFormatException ex) {
+//        Class<?> targetType = ex.getTargetType();
+//
+//        if (Option.class.isAssignableFrom(targetType)) {
+//
+//            @SuppressWarnings("unchecked")
+//            String allowedValues = Option.getAllOptions(targetType.getClass());
+//
+//            String message = String.format(
+//                    "Invalid value '%s' for %s. Allowed values are: %s",
+//                    ex.getValue(), targetType.getSimpleName(), allowedValues
+//            );
+//            return ResponseEntity.badRequest().body(message);
+//        }
+//
+//        // fallback for other types
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getOriginalMessage());
+//    }
+
+//
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    public ResponseEntity<Error> handleValidationExceptions(
+//            MethodArgumentNotValidException ex, WebRequest request) {
+//
+//        List<String> errors = ex.getBindingResult()
+//                .getFieldErrors()
+//                .stream()
+//                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+//                .collect(Collectors.toList());
+//
+//        Error error = Error.builder()
+//                .error(HttpStatus.BAD_REQUEST.toString())
+//                .success(false)
+//                .message("Validation failed")
+//                .timestamp(LocalDateTime.now().toString())
+//                .build();
+//
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+//
+//    }

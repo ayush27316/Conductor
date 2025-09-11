@@ -1,7 +1,7 @@
 package com.conductor.core.model.form;
 
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +23,7 @@ public class Form extends Resource {
     @PrePersist
     public void init()
     {
-        super.init(ResourceType.FORM);
+        super.init(ResourceType.FORM,null );
     }
 
     public static Form createNew(String formSchema){

@@ -1,6 +1,6 @@
 package com.conductor.core.model.event;
 
-import com.conductor.core.model.common.Option;
+import com.conductor.core.model.Option;
 
 /**
  * Defines the possible access control strategies for an {@link Event}.

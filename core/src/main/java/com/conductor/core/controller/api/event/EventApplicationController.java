@@ -2,19 +2,25 @@ package com.conductor.core.controller.api.event;
 
 import com.conductor.core.dto.ApplicationDTO;
 import com.conductor.core.dto.FormResponse;
+import com.conductor.core.model.file.File;
 import com.conductor.core.model.user.User;
 import com.conductor.core.service.EventApplicationService;
+import com.conductor.core.service.FileService;
+import com.stripe.model.tax.Registration;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -34,6 +40,7 @@ import java.util.Map;
 public class EventApplicationController {
 
     private final EventApplicationService eventApplicationService;
+    private final FileService fileService;
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{event-id}/apply")
@@ -110,11 +117,12 @@ public class EventApplicationController {
             @NotBlank(message = "Application Id is required")
             @Size(min = 36, max = 36)
             String applicationExternalId,
-            @RequestParam @NotBlank(message = "Comment cannot be blank")
+            @RequestParam(name="comment") @NotBlank(message = "Comment cannot be blank")
             @Size(max = 1000, message = "Comment cannot exceed 1000 characters")
             String comment,
             Authentication authentication) {
 
+        System.out.println(comment);
         eventApplicationService.comment(
                 (User)authentication.getPrincipal(),
                 applicationExternalId,
@@ -146,4 +154,38 @@ public class EventApplicationController {
         return ResponseEntity.ok(Map.of("form",form));
     }
 
+
+    @PostMapping("/{application-id}/files/")
+    public ResponseEntity<?> uploadFile(
+            @PathVariable("application-id")
+            @NotBlank(message = "Application Id is required")
+            @Size(min = 36, max = 36)
+            String eventApplicationExternalId,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication) {
+
+        eventApplicationService.storeFile(file,eventApplicationExternalId, (User) authentication.getPrincipal());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{application-id}/files/{file-id}")
+    public ResponseEntity<byte[]> downloadFile(
+                    @PathVariable("application-id")
+                    @NotBlank(message = "Application Id is required")
+                    @Size(min = 36, max = 36)
+                    String applicationExternalId,
+                    @PathVariable("file-id")
+                    @NotBlank(message = "File Id is required")
+                    @Size(min = 36, max = 36)
+                    String fileExternalId,
+                    Authentication auth
+                    )
+    {
+        File file = fileService.getFile(fileExternalId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+                .contentType(MediaType.parseMediaType(file.getContentType()))
+                .body(file.getData());
+    }
 }

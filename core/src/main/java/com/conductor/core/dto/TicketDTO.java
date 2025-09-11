@@ -20,8 +20,8 @@ public class TicketDTO {
 
     private String code;
 
-    @JsonProperty(namespace ="owner_username")
-    private String ownerUsername;
+    @JsonProperty(namespace ="username")
+    private String username;
     @JsonProperty("event_id")
     private String eventExternalId;
 }

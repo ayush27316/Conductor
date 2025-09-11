@@ -1,7 +1,7 @@
 package com.conductor.core.security;
 
 import com.conductor.core.dto.permission.PermissionDTO;
-import com.conductor.core.model.common.Option;
+import com.conductor.core.model.Option;
 import com.conductor.core.model.user.User;
 import com.conductor.core.model.user.UserRole;
 import com.conductor.core.util.PermissionMapper;

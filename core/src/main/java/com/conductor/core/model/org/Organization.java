@@ -1,12 +1,11 @@
 package com.conductor.core.model.org;
 
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.permission.Privilege;
 import com.conductor.core.model.user.Operator;
-import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -52,7 +51,7 @@ public class Organization extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.ORGANIZATION);
+        super.init(ResourceType.ORGANIZATION, null);
     }
 
 

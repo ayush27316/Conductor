@@ -1,25 +1,21 @@
 package com.conductor.core.model.application;
 
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.dispute.Dispute;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.file.File;
 import com.conductor.core.model.form.Form;
 import com.conductor.core.model.org.Organization;
-import com.conductor.core.model.ticket.Ticket;
 import com.conductor.core.model.user.User;
-import com.conductor.core.util.Utils;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 
 /**
@@ -94,27 +90,19 @@ public class Application extends Resource {
     @OrderBy("createdAt ASC")
     private List<ApplicationComment> comments = new ArrayList<>();
 
-//Forms are connected to target resoruces and is fetched from those target
-    //so it does not makes sense to store a reference here.
-//    @ManyToOne
-//    @JoinColumn(name = "form")
-//    private Form form;
-
     /**
      * Acquiring a resource often requires requester to submit information
      * that is necessary for the approval stage. Conductor provides {@link Form} 's
      * that can store form associated with the required information. The response
-     * to this form can be stored here in String format.
-     * TODO: right now any documents that are part of the response are also
-     *  stored in this formResponse. This needs defining a standard for creating
-     *  and parsing form from json schemas. Any third party integration can then
-     *  conform to this standard. This way we can have a separate store for files.
-     *
+     * to this form can be stored here in String format. The access to the Form's
+     * will be individually handled by the particular services using this Application.
      */
     @Lob
     @Column(name = "form_response")
     private String formResponse;
 
+    @OneToMany(mappedBy = "resource")
+    private List<File> files = new ArrayList<>();
     /**
      * Creates a new Application.
      *
@@ -126,7 +114,6 @@ public class Application extends Resource {
     public static Application createNew(
             Resource targetResource,
             User submittedBy,
-//            Form form,
             String formResponse)
     {
         Application application = new Application();
@@ -136,14 +123,6 @@ public class Application extends Resource {
         application.setSubmittedBy(submittedBy);
         application.setSubmittedAt(LocalDateTime.now());
         application.setFormResponse(formResponse);
-
-//        return Application.builder()
-//                .targetResource(targetResource)
-//                .submittedBy(submittedBy)
-//                .applicationStatus(ApplicationStatus.PENDING)
-////                .form(form)
-//                .formResponse(formResponse)
-//                .build();
 
         return application;
     }
@@ -197,7 +176,6 @@ public class Application extends Resource {
         validateStatusTransition(ApplicationStatus.CANCELLED);
         this.applicationStatus = ApplicationStatus.CANCELLED;
     }
-
 
     /**
      * Add a new comment to the application.
@@ -254,7 +232,7 @@ public class Application extends Resource {
 
     @PrePersist
     protected void prePersist() {
-        super.init(ResourceType.APPLICATION);
+        super.init(ResourceType.APPLICATION, null);
     }
 
 }

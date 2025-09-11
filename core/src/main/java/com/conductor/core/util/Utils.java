@@ -1,16 +1,37 @@
 package com.conductor.core.util;
 
-import com.conductor.core.model.common.Resource;
-import jakarta.persistence.Column;
+import com.conductor.core.model.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 @Component
 @Slf4j
 public class Utils {
+
+
+    /**
+     * A generic helper that applies a value to a setter only if the value is not null.
+     * @param setter A method reference to the setter (e.g., event::setName)
+     * @param value The value to potentially set
+     */
+    public static  <T> void updateIfNotNull(Consumer<T> setter, T value) {
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+    /**
+     * A generic helper for collections that updates the property only if the collection is not null or empty.
+     */
+    public static <T extends Collection<?>> void updateIfNotEmpty(Consumer<T> setter, T value) {
+        if (value != null && !value.isEmpty()) {
+            setter.accept(value);
+        }
+    }
 
     /**
      * Checks if an Object is null

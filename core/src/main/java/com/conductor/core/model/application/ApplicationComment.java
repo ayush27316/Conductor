@@ -1,6 +1,6 @@
 package com.conductor.core.model.application;
 
-import com.conductor.core.model.common.BaseEntity;
+import com.conductor.core.model.BaseEntity;
 import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
 import lombok.*;

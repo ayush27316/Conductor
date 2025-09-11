@@ -1,8 +1,7 @@
 package com.conductor.core.model.user;
 
-import com.conductor.core.model.application.Application;
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.ticket.Ticket;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -57,7 +56,7 @@ public class User extends Resource implements UserDetails {
 //    @OneToMany(mappedBy = "submittedBy", fetch = FetchType.LAZY ,cascade = CascadeType.PERSIST)
 //    private List<Application> applications = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "user",fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     private List<Ticket> tickets = new ArrayList<>();
 
     @Override
@@ -87,7 +86,7 @@ public class User extends Resource implements UserDetails {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.USER);
+        super.init(ResourceType.USER, null);
 
     }
 }

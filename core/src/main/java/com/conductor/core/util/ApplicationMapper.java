@@ -3,10 +3,11 @@ package com.conductor.core.util;
 import com.conductor.core.dto.ApplicationDTO;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.application.ApplicationComment;
-import com.conductor.core.model.common.ResourceType;
-import com.conductor.core.service.EventApplicationService;
+import com.conductor.core.model.ResourceType;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ApplicationMapper {
@@ -21,21 +22,30 @@ public class ApplicationMapper {
                     .collect(Collectors.toList());
         }
 
+        Map<String, String> fileMetadata = application.getFiles().stream()
+                .collect(Collectors.toMap(
+                        file -> file.getName(),
+                        file -> file.getExternalId()
+                ));
+
+
         ApplicationDTO dto = ApplicationDTO.builder()
+                .externalId(application.getExternalId())
                 .submittedByUserExternalId(application.getSubmittedBy().getExternalId())
                 .submittedAt(application.getSubmittedAt())
                 .applicationStatus(application.getApplicationStatus())
-                .processedByUserExternalId(application.getProcessedBy().getExternalId())
-                .processedAt(application.getProcessedAt())
+//                .processedByUserExternalId(Objects.isNull(application.getProcessedBy())?application.getProcessedBy().getExternalId(): null)
+//                .processedAt(application.getProcessedAt())
                 .comments(commentDTOs)
+                .fileMetada(fileMetadata)
                 .applicationFormResponse(application.getFormResponse())
                 .build();
-        if(application.getTargetResource().getResourceType().equals(ResourceType.EVENT))
-        {
-             dto.setEventExternalId(application.getTargetResource().getExternalId());
-        } else if (application.getTargetResource().getResourceType().equals(ResourceType.ORGANIZATION)) {
-            dto.setOrganizationExternalId(application.getTargetResource().getExternalId());
-        }
+//        if(application.getTargetResource().getResourceType().equals(ResourceType.EVENT))
+//        {
+//             dto.setEventExternalId(application.getTargetResource().getExternalId());
+//        } else if (application.getTargetResource().getResourceType().equals(ResourceType.ORGANIZATION)) {
+//            dto.setOrganizationExternalId(application.getTargetResource().getExternalId());
+//        }
 
         return dto;
     }

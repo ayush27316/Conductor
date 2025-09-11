@@ -1,6 +1,6 @@
 package com.conductor.core.model.permission;
 
-import com.conductor.core.model.common.Option;
+import com.conductor.core.model.Option;
 
 /**
  * Defines the types of actions that can be granted

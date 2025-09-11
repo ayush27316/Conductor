@@ -1,15 +1,6 @@
 package com.conductor.core.model.application;
 
-import com.conductor.core.model.common.Option;
-import com.conductor.core.model.event.Event;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.conductor.core.model.Option;
 
 /**
  * Defines {@link Application} states.

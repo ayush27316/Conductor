@@ -29,6 +29,8 @@ public class EventAccessDetails {
     @Enumerated(EnumType.STRING)
     private EventAccessStrategy accessStrategy;
 
+    private int accessibleNumberOfTimes;
+
     @Column(name = "accessible_from", nullable = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime accessibleFrom;

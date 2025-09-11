@@ -1,7 +1,7 @@
 package com.conductor.core.model.ticket;
 
-import com.conductor.core.model.common.Resource;
-import com.conductor.core.model.common.ResourceType;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.user.User;
 import jakarta.persistence.*;
@@ -11,7 +11,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 
 /**
@@ -47,7 +46,7 @@ public class Ticket extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.TICKET);
+        super.init(ResourceType.TICKET, null);
     }
 
     /**

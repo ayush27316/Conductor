@@ -1,13 +1,14 @@
 package com.conductor.core.model.permission;
 
-import com.conductor.core.model.common.Option;
+import com.conductor.core.model.Option;
+import com.conductor.core.model.Resource;
 
 import java.util.Optional;
 
 /**
  * {@code Privilege} interface is used as a marker interface
  * to reference a group of {@link Option} that represents
- * a privilege to a {@link com.conductor.core.model.common.Resource}
+ * a privilege to a {@link Resource}
  *
  * Note: Name of options within a privilege must be unique. Otherwise,
  * safeCast will misbehave and might throw {@link ClassCastException}.
