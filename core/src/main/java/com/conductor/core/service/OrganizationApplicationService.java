@@ -38,6 +38,7 @@ public class OrganizationApplicationService {
     private final OperatorRepository operatorRepository;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final PermissionRepository permissionRepository;
 
     @Transactional
     public String apply(
@@ -45,7 +46,7 @@ public class OrganizationApplicationService {
             OrganizationApplicationRequest request) {
 
         //check if organization name already exist
-        if(!organizationRepository.findByName(request.getName()).isEmpty()){
+        if (!organizationRepository.findByName(request.getName()).isEmpty()) {
             throw new RuntimeException("Organization name already taken");
         }
 
@@ -59,9 +60,9 @@ public class OrganizationApplicationService {
                 .websiteUrl(request.getWebsiteUrl())
                 .tags(request.getTags())
                 .build();
-        try{
+        try {
             organizationRepository.save(organization);
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Organization registration failed." + e.getMessage(), e);
         }
 
@@ -72,10 +73,17 @@ public class OrganizationApplicationService {
                     submittedBy,
                     organization,
                     objectMapper.writeValueAsString(request)
-                    );
+            );
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+
+        //grant user necessary permission to access the new application
+        Permission permission =Permission.builder()
+                            .resource(application)
+                            .grantedTo(submittedBy)
+                    .build();
+        permissionRepository.save(permission);
 
         return application.getExternalId();
     }
@@ -105,8 +113,8 @@ public class OrganizationApplicationService {
     }
 
     @Transactional
-    public void cancel(String applicationExternalId) {
-        applicationManager.cancelEventApplication(applicationExternalId);
+    public void cancel(String applicationExternalId, User cancelledBy) {
+        applicationManager.cancelEventApplication(applicationExternalId, cancelledBy);
     }
 
     @Transactional
@@ -138,7 +146,7 @@ public class OrganizationApplicationService {
                 .build();
 
 
-        permission.setUser(user);
+        permission.setGrantedTo(user);
         user.setPermissions(List.of(permission));
 
         userRepository.save(user);

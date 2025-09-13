@@ -32,6 +32,6 @@ public class Operator extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.OPERATOR, null);
+        super.init(ResourceType.OPERATOR, this);
     }
 }

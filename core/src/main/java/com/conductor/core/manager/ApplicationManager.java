@@ -102,6 +102,7 @@ public class ApplicationManager {
         return application;
     }
 
+
     /**
      * Cancels an existing {@link Application}.
      *
@@ -110,18 +111,26 @@ public class ApplicationManager {
      * @throws ApplicationNotFound                  if the application cannot be found
      * @throws ApplicationRequestFailedException    for all other exceptions cause due to database operations failure.
      * @throws IllegalStateException                if application is in final state. See {@link Application#isFinalStatus()}
+     * @throws SecurityException                    if the user doesn't have necessary permission to cancel this application
      */
     public Application cancelEventApplication(
-            String applicationExternalId)
+            String applicationExternalId, User cancelledBy)
     {
-//        notNull(applicationExternalId, "Application Id is required");
 
         Application application = findApplication(applicationExternalId);
+
+//        cancelledBy = userRepository.findByExternalId(cancelledBy.getExternalId())
+//                .orElseThrow(() -> new RuntimeException());
+//        //do not need this as it is confirmed form the claims
+//        if(!application.getSubmittedBy().equals(cancelledBy)){
+//            throw new SecurityException("You do not have permission to cancel this application");
+//        }
 
         application.cancel();
         saveOrElseThrow(application);
         return application;
     }
+
 
 
     /**

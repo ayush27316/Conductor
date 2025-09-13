@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@Validated
 @RequestMapping("/api/v1/organizations")
 @RequiredArgsConstructor
 public class OrganizationRegistrationController {
@@ -28,19 +30,19 @@ public class OrganizationRegistrationController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> apply(
             Authentication auth,
-            @Valid @RequestBody OrganizationApplicationRequest request) {
+            @RequestBody OrganizationApplicationRequest request) {
 
         String applicationExternalId = organizationApplicationService.apply(
                 (User) auth.getPrincipal(),
                 request);
 
-        Map<String, String> body = Map.of("registration_id", applicationExternalId);
+        Map<String, String> body = Map.of("application_id", applicationExternalId);
         return ResponseEntity.ok().body(body);
 
     }
 
 
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/applications/{application-id}/approve")
     public ResponseEntity<?> approveApplication(
             @PathVariable("application-id")
@@ -58,7 +60,7 @@ public class OrganizationRegistrationController {
     }
 
 
-    //    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/applications/{application-id}/reject")
     public ResponseEntity<?> rejectApplication(
             @PathVariable("application-id")
@@ -79,19 +81,20 @@ public class OrganizationRegistrationController {
         return ResponseEntity.ok().build();
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', {cancel:'write'})")
+    @PreAuthorize("hasPermission(#application-id, 'application', null)")
     @DeleteMapping("/applications/{application-id}")
     public ResponseEntity<?> cancelApplication(
             @PathVariable("application-id")
             @NotBlank(message = "Application Id is required")
             @Size(min = 36, max = 36)
-            String applicationExternalId) {
+            String applicationExternalId,
+            Authentication auth) {
 
-        organizationApplicationService.cancel(applicationExternalId);
+        organizationApplicationService.cancel(applicationExternalId, (User) auth.getPrincipal());
         return ResponseEntity.ok().build();
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+    @PreAuthorize("hasPermission(#application-id, 'application', null) || hasRole('ADMIN')")
     @PostMapping("/applications/{application-id}/comments")
     public ResponseEntity<?> comment(
             @PathVariable("application-id")
@@ -119,4 +122,6 @@ public class OrganizationRegistrationController {
                 organizationApplicationService.getAllOrganizationsWaitingForApproval();
         return ResponseEntity.ok(null);
     }
+
+    //get all application pagination
 }

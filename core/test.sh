@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # API Testing Script
-# This script performs a complete workflow: user signup, login, organization registration, admin approval, and event creation
+# This script performs a complete workflow: user signup, login, organization application, admin approval, and event creation
 
 set -e  # Exit on any error
 
@@ -115,22 +115,22 @@ org_status=$(echo "$org_response" | tail -n1)
 org_body=$(echo "$org_response" | head -n -1)
 
 if [ "$org_status" -ne 200 ] && [ "$org_status" -ne 201 ]; then
-    print_error "Organization registration failed with status: $org_status"
+    print_error "Organization application failed with status: $org_status"
     print_error "Response: $org_body"
     exit 1
 fi
 
-# Extract registration ID
-registration_id=$(extract_json_value "$org_body" "registration_id")
+# Extract application ID
+application_id=$(extract_json_value "$org_body" "application_id")
 
-if [ -z "$registration_id" ]; then
-    print_error "Failed to extract registration_id from organization response"
+if [ -z "$application_id" ]; then
+    print_error "Failed to extract application_id from organization response"
     print_error "Response: $org_body"
     exit 1
 fi
 
-print_success "Organization registration completed successfully"
-echo "Registration ID: $registration_id"
+print_success "Organization application completed successfully"
+echo "Registration ID: $application_id"
 
 # Step 4: Admin login
 print_info "Step 4: Admin login..."
@@ -166,7 +166,7 @@ echo "Admin JWT Token: $admin_jwt"
 # Step 5: Admin approves the organization
 print_info "Step 5: Admin approving organization..."
 approve_response=$(curl -s -w "\n%{http_code}" --request PUT \
-  --url "$BASE_URL/api/v1/organizations/applications/$registration_id/approve" \
+  --url "$BASE_URL/api/v1/organizations/applications/$application_id/approve" \
   --header "authorization: Bearer $admin_jwt" \
   --header 'content-type: application/json')
 
@@ -261,4 +261,4 @@ echo "--------"
 echo "User JWT Token: $user_jwt"
 echo "Admin JWT Token: $admin_jwt"
 echo "Organization JWT Token: $org_jwt"
-echo "Registration ID: $registration_id"
+echo "Registration ID: $application_id"

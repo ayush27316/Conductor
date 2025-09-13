@@ -3,6 +3,8 @@ package com.conductor.core.service;
 import com.conductor.core.dto.ApplicationDTO;
 import com.conductor.core.exception.*;
 import com.conductor.core.manager.ApplicationManager;
+import com.conductor.core.model.Resource;
+import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.ticket.Ticket;
 import com.conductor.core.repository.*;
 import com.conductor.core.util.ApplicationMapper;
@@ -12,7 +14,9 @@ import com.conductor.core.model.application.Application;
 import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.user.User;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +56,7 @@ public class EventApplicationService {
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final OperatorRepository operatorRepository;
+    private final PermissionRepository permissionRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -111,6 +116,15 @@ public class EventApplicationService {
 
         // TODO: asynchronously do analytics if configured
 
+        //grant user necessary permission to access the new application
+        //so if we see this in jwt claims then we do not need to check if
+        //the user submitted this applcation
+        Permission permission =Permission.builder()
+                .resource(application)
+                .grantedTo(user)
+                .build();
+        permissionRepository.save(permission);
+
         return application.getExternalId();
     }
 
@@ -156,9 +170,21 @@ public class EventApplicationService {
         User submittedBy = application.getSubmittedBy();
         applicationManager.approveApplication(approvedBy, applicationExternalId);
 
-        Ticket ticket = Ticket.creatNewTicket(
-                submittedBy,
-                (Event)application.getTargetResource());
+        //reduce the available seats
+        Event event = Resource.safeCast(Event.class, application.getTargetResource())
+                .orElseThrow( () -> new RuntimeException());
+        event.setTotalTicketsSold(event.getTotalTicketsSold() + 1);
+
+        //Database level constraint has been set to prevent over selling of tickets
+        //when this constraint is violated DataIntegrityViolationException exception is
+        //thrown. Here we map it to a runtime exception with an appropriate message.
+        try {
+            eventRepository.save(event);
+        } catch (DataIntegrityViolationException cve){
+            throw new RuntimeException("Sorry, all tickets are sold out!");
+        }
+
+        Ticket ticket = Ticket.creatNewTicket(submittedBy, event);
 
         submittedBy.getTickets().add(ticket);
         try{
@@ -177,9 +203,9 @@ public class EventApplicationService {
      * @throws ApplicationRequestFailedException        for all other exceptions cause due to database operations failure.
      */
     @Transactional
-    public void cancelEventApplication(String applicationExternalId)
+    public void cancelEventApplication(String applicationExternalId, User cancelledBy)
     {
-      applicationManager.cancelEventApplication(applicationExternalId);
+      applicationManager.cancelEventApplication(applicationExternalId,cancelledBy);
     }
 
     /**

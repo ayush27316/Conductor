@@ -7,9 +7,12 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Represents a single permission grant for a user on a specific resourceType.
@@ -32,9 +35,9 @@ public class Permission extends BaseEntity {
      * The user this permission is granted to
      */
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id_fk", nullable = false)
+    @JoinColumn(name = "granted_to_id_fk", nullable = false)
     @JsonBackReference
-    private User user;
+    private User grantedTo;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "resource_id_fk", nullable = false)
@@ -47,14 +50,15 @@ public class Permission extends BaseEntity {
     private Map<Privilege, AccessLevel> permission = new HashMap<>();
 
     @Column(name = "granted_at", nullable = true)
-    private ZonedDateTime grantedAt;
+    private LocalDateTime grantedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "granted_by_user_id_fk")
     private User grantedBy;
 
+    //never expire if null
     @Column(name = "expires_at")
-    private ZonedDateTime expiresAt;
+    private LocalDateTime expiresAt;
 
     /**
      *
@@ -72,4 +76,10 @@ public class Permission extends BaseEntity {
          }
     }
 
+    @PrePersist
+    void doPrePersist(){
+        if(Objects.isNull(grantedAt)){
+            grantedAt = LocalDateTime.now();
+        }
+    }
 }

@@ -23,7 +23,7 @@ public class Form extends Resource {
     @PrePersist
     public void init()
     {
-        super.init(ResourceType.FORM,null );
+        super.init(ResourceType.FORM,this );
     }
 
     public static Form createNew(String formSchema){

@@ -46,7 +46,7 @@ public class Ticket extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.TICKET, null);
+        super.init(ResourceType.TICKET, this);
     }
 
     /**

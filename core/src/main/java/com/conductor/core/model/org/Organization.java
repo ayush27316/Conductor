@@ -51,7 +51,7 @@ public class Organization extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.ORGANIZATION, null);
+        super.init(ResourceType.ORGANIZATION, this);
     }
 
 

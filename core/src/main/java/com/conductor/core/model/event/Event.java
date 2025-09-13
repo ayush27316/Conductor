@@ -44,6 +44,9 @@ public class Event extends Resource {
     @Embedded
     private EventAccessDetails accessDetails;
 
+    @Embedded
+    private EventCheckInDetails checkInDetails;
+
     /**
      * If {@code EventOption.REQUIRE_APPROVAL} is selected then form
      * is required.
@@ -61,6 +64,9 @@ public class Event extends Resource {
 
     @Column(name = "total_tickets_to_be_sold", nullable = false)
     private int totalTicketsToBeSold;
+
+    @Column(name = "total_tickets_sold")
+    private int totalTicketsSold;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id_fk", nullable = false)
@@ -80,7 +86,7 @@ public class Event extends Resource {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.EVENT,null);
+        super.init(ResourceType.EVENT,this);
     }
 
     public boolean hasEnded()

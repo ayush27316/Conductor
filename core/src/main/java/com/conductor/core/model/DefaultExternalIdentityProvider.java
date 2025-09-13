@@ -9,7 +9,7 @@ import java.util.UUID;
 //@ConditionalOnMissingBean(ExternalIdentityProvider.class)
 public class DefaultExternalIdentityProvider implements ExternalIdentityProvider {
     @Override
-    public String generateId(ResourceType type, Object info) {
+    public String generateId(Resource resource) {
         return UUID.randomUUID().toString();
     }
 }

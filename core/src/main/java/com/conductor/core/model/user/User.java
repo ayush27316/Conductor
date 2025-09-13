@@ -2,6 +2,7 @@ package com.conductor.core.model.user;
 
 import com.conductor.core.model.Resource;
 import com.conductor.core.model.ResourceType;
+import com.conductor.core.model.org.Organization;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.ticket.Ticket;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -86,7 +87,7 @@ public class User extends Resource implements UserDetails {
 
     @PrePersist
     public void prePersist() {
-        super.init(ResourceType.USER, null);
+        super.init(ResourceType.USER, this);
 
     }
 }

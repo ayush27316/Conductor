@@ -1,5 +1,7 @@
 package com.conductor.core.model;
 
+import com.conductor.core.security.fiber.FiberIdentityProvider;
+
 /**
  * Responsible for generating a globally unique identifier for all
  * {@link Resource}'s within Conductor. At runtime a Resource will look
@@ -15,13 +17,12 @@ package com.conductor.core.model;
  * @note The generated id is different from primary key. Although, external
  *       is indexed for fast lookups.
  * @see  Resource#init(ResourceType, Object)
+ * @see  FiberIdentityProvider
  */
 public interface ExternalIdentityProvider {
     /**
      * Generates a globally unique id.
-     * @param type type of the resource this id will be generated for
-     * @param info additional info passed by the derived resources entites
-     *             that might be useful for generating the id.
+     * @param resource target resource
      */
-    String generateId(ResourceType type, Object info );
+    String generateId(Resource resource );
 }

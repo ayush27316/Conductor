@@ -51,6 +51,6 @@ public class File extends Resource {
 
     @PrePersist
     void init(){
-        super.init(ResourceType.FILE,null);
+        super.init(ResourceType.FILE,this);
     }
 }

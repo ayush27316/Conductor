@@ -60,7 +60,11 @@ public class EventApplicationController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+
+    //an operator with event level permission
+    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
+    //an operator with organization level permission
+    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @PutMapping("/applications/{application-id}/approve")
     public ResponseEntity<?> approveApplication(
             @PathVariable("application-id")
@@ -77,7 +81,11 @@ public class EventApplicationController {
         return ResponseEntity.ok().build();
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+
+    //an operator with event level permission
+    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
+    //an operator with organization level permission
+    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @PutMapping("/applications/{application-id}/reject")
     public ResponseEntity<?> rejectApplication(
             @PathVariable("application-id")
@@ -98,19 +106,25 @@ public class EventApplicationController {
         return ResponseEntity.ok().build();
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', {cancel:'write'})")
+//    @PreAuthorize("hasPermission(#application-id, 'application', null)")
     @DeleteMapping("/applications/{application-id}")
     public ResponseEntity<?> cancelApplication(
             @PathVariable("application-id")
             @NotBlank(message = "Application Id is required")
             @Size(min = 36, max = 36)
-            String applicationExternalId) {
+            String applicationExternalId,
+            Authentication auth) {
 
-        eventApplicationService.cancelEventApplication(applicationExternalId);
+        eventApplicationService.cancelEventApplication(applicationExternalId, (User) auth.getPrincipal());
         return ResponseEntity.ok().build();
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+    // the user who submitted the application
+    //@PreAuthorize("hasPermission(#application-id, 'application', null)") or
+    //an operator with event level permission
+    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
+    //an operator with organization level permission
+    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @PostMapping("/applications/{application-id}/comments")
     public ResponseEntity<?> comment(
             @PathVariable("application-id")
@@ -132,14 +146,16 @@ public class EventApplicationController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
+    //an operator with event level permission
+    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
+    //an operator with organization level permission
+    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @GetMapping("/{event-id}/applications")
     public ResponseEntity<?> getEventApplications(
             @Parameter(description = "External ID of the event", required = true)
             @PathVariable("event-id") @NotBlank String eventExternalId) {
 
         List<ApplicationDTO> applications = eventApplicationService.getEventApplications(eventExternalId);
-
         return ResponseEntity.ok(applications);
     }
 
@@ -154,7 +170,7 @@ public class EventApplicationController {
         return ResponseEntity.ok(Map.of("form",form));
     }
 
-
+    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
     @PostMapping("/{application-id}/files/")
     public ResponseEntity<?> uploadFile(
             @PathVariable("application-id")
@@ -167,7 +183,12 @@ public class EventApplicationController {
         eventApplicationService.storeFile(file,eventApplicationExternalId, (User) authentication.getPrincipal());
         return ResponseEntity.ok().build();
     }
-
+    // the user who submitted the application
+    //@PreAuthorize("hasPermission(#application-id, 'application', null)") or
+    //an operator with event level permission
+    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
+    //an operator with organization level permission
+    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @GetMapping("/{application-id}/files/{file-id}")
     public ResponseEntity<byte[]> downloadFile(
                     @PathVariable("application-id")

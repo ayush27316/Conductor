@@ -232,7 +232,7 @@ public class Application extends Resource {
 
     @PrePersist
     protected void prePersist() {
-        super.init(ResourceType.APPLICATION, null);
+        super.init(ResourceType.APPLICATION, this);
     }
 
 }

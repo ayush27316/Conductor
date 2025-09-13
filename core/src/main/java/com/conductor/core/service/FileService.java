@@ -17,7 +17,11 @@ public class FileService {
 
     private final FileRepository fileRepository;
 
-public void storeFile(MultipartFile file, Optional<Resource> associatedResource, User uploadedBy) {
+public void storeFile(
+        MultipartFile file,
+        Optional<Resource> associatedResource,
+        User uploadedBy)
+{
     File entity = null;
     try {
         entity = File.builder()
