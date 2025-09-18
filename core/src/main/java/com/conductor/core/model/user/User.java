@@ -50,7 +50,7 @@ public class User extends Resource implements UserDetails {
     @Column(name = "email_address", nullable = false, unique = true, length = 150)
     private String emailAddress;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "grantedTo", fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @JsonManagedReference
     private List<Permission> permissions;
 

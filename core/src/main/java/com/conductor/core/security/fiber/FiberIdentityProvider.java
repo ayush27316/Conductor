@@ -6,7 +6,6 @@ import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.org.Organization;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -17,7 +16,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -116,13 +114,12 @@ public class FiberIdentityProvider implements ExternalIdentityProvider {
 
     @Override
     public String generateId(Resource resource) {
-        switch (resource.getResourceType()){
+        return switch (resource.getResourceType()){
             case ORGANIZATION -> fnv1aHash64(Resource.safeCast(Organization.class, resource).get().getName());
             case EVENT -> generateIdForEvent(Resource.safeCast(Event.class, resource).get());
             case APPLICATION -> generateIdForApplication(Resource.safeCast(Application.class, resource).get());
-        }
-
-        return null;
+            default -> fnv1aHash64(UUID.randomUUID().toString());
+        };
     }
 
     private String generateIdForApplication(Application application) {
@@ -131,21 +128,23 @@ public class FiberIdentityProvider implements ExternalIdentityProvider {
         String applicationHash = fnv1aHash64(UUID.randomUUID().toString());
 
         if(application.getTargetResource().getResourceType().equals(ResourceType.ORGANIZATION)){
+
+            //in this case application acts like its own root in fiber
+
             //new hash for this application based of a random uiid
-
-            String organizationExternalId = application.getTargetResource().getExternalId();
-
-            String value = organizationExternalId + '.' + applicationHash;
-
-            byte[] sign;
-            try {
-                 sign = sign16Bytes(value);
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            } catch (InvalidKeyException e) {
-                throw new RuntimeException(e);
-            }
-            return value + '.' + bytesToHex(sign);
+//            String organizationHash = application.getTargetResource().getExternalId();
+//
+//            String value = organizationHash + '.' + applicationHash;
+//
+//            byte[] sign;
+//            try {
+//                 sign = sign16Bytes(value);
+//            } catch (NoSuchAlgorithmException e) {
+//                throw new RuntimeException(e);
+//            } catch (InvalidKeyException e) {
+//                throw new RuntimeException(e);
+//            }
+            return  applicationHash;
         }
 
         if (application.getTargetResource().getResourceType().equals(ResourceType.EVENT))
@@ -173,10 +172,11 @@ public class FiberIdentityProvider implements ExternalIdentityProvider {
     private String generateIdForEvent(Event event) {
         //find the organization external id, generate a hash of events name
         //then org_id.event_name_has.sign is id of event
-        String organizationExternalId = event.getOrganization().getExternalId();
-        String eventNameHash = fnv1aHash64(event.getName());
+        String organizationHash = event.getOrganization().getExternalId();
 
-        String value = organizationExternalId + '.' + eventNameHash;
+        String eventHash = fnv1aHash64(event.getName());
+
+        String value = organizationHash + '.' + eventHash;
         byte[] sign;
         try {
             sign = sign16Bytes(value);
@@ -185,12 +185,6 @@ public class FiberIdentityProvider implements ExternalIdentityProvider {
         } catch (InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-
-        return  value + bytesToHex(sign);
+        return  value + "." + bytesToHex(sign);
     }
-
-//    private String generateIdForOrganization(Organization organization) {
-//        //simply hash of its names
-//        return fnv1aHash64(organization.getName());
-//    }
 }

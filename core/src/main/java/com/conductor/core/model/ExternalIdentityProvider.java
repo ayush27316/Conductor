@@ -16,7 +16,7 @@ import com.conductor.core.security.fiber.FiberIdentityProvider;
  * which is a random UUID generator.
  * @note The generated id is different from primary key. Although, external
  *       is indexed for fast lookups.
- * @see  Resource#init(ResourceType, Object)
+ * @see  Resource#init(Resource) 
  * @see  FiberIdentityProvider
  */
 public interface ExternalIdentityProvider {

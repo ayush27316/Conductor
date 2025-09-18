@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Embeddable
 public class EventCheckInDetails {
 
-    @Column(name="checkin_type", nullable = false)
+    @Column(name="checkin_type")
     @Enumerated(EnumType.STRING)
     private EventCheckInType type;
 

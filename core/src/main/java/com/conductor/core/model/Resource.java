@@ -25,7 +25,7 @@ import java.util.Optional;
                 @Index(name = "idx_resource_id", columnList = "external_id")
         }
 )
-@Inheritance(strategy = InheritanceType.JOINED)
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class Resource extends BaseEntity {
 
 
@@ -46,7 +46,7 @@ public abstract class Resource extends BaseEntity {
     private ResourceType resourceType;
 
     /**
-     * Provides an external identity to this entity on calling {@link #init(ResourceType, Object)}.
+     * Provides an external identity to this entity on calling {@link #init(ResourceType, Resource)}.
      * @see {@link ExternalIdentityProvider}.
      */
     @Transient
@@ -58,14 +58,15 @@ public abstract class Resource extends BaseEntity {
      * should be used to refer to this resource.
      *
      */
-    public void init(ResourceType resourceType, Object info){
+    public void init(ResourceType resourceType, Resource info){
+        //it is important tha this comes before calling the provider for id
+        this.resourceType = resourceType;
         if(Objects.isNull(externalIdentityProvider)) {
             externalIdentityProvider = ExternalIdentityProviderContainer.get();
         }
         if(Objects.isNull(externalId)){
-            externalId = externalIdentityProvider.generateId(resourceType, info);
+            externalId = externalIdentityProvider.generateId(info);
         }
-        this.resourceType = resourceType;
     }
 
     public ResourceType getResourceType()
@@ -103,7 +104,6 @@ public abstract class Resource extends BaseEntity {
                 ? Hibernate.unproxy(source)
                 : source;
 
-        // Type check
         if (targetResource.isInstance(unproxied)) {
             return Optional.of((E) unproxied);
         } else {

@@ -2,11 +2,11 @@ package com.conductor.core.controller.api.event;
 
 import com.conductor.core.dto.ApplicationDTO;
 import com.conductor.core.dto.FormResponse;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.file.File;
 import com.conductor.core.model.user.User;
 import com.conductor.core.service.EventApplicationService;
 import com.conductor.core.service.FileService;
-import com.stripe.model.tax.Registration;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
@@ -21,7 +21,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import static com.conductor.core.security.fiber.FiberPermissionEvaluator.hasPermission;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -202,6 +204,16 @@ public class EventApplicationController {
                     Authentication auth
                     )
     {
+        //must be an event applciation
+        //then application_id = organization organization_hash.event_hash.applicaiton_hash.sign
+
+        String[] parts = applicationExternalId.split("\\.");
+        List<String> result = Arrays.asList(parts);
+
+
+        hasPermission(auth,applicationExternalId, ResourceType.APPLICATION,null);
+
+
         File file = fileService.getFile(fileExternalId);
 
         return ResponseEntity.ok()

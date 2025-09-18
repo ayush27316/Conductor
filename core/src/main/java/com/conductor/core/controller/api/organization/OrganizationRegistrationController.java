@@ -3,7 +3,7 @@ package com.conductor.core.controller.api.organization;
 import com.conductor.core.dto.*;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.user.User;
-import com.conductor.core.service.OrganizationApplicationService;
+import com.conductor.core.service.OrganizationApplicationAndOnboardingService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +23,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OrganizationRegistrationController {
 
-    private final OrganizationApplicationService organizationApplicationService;
+    private final OrganizationApplicationAndOnboardingService organizationApplicationAndOnboardingService;
 
     @PostMapping("/apply")
     @PreAuthorize("hasRole('USER')")
@@ -32,7 +31,7 @@ public class OrganizationRegistrationController {
             Authentication auth,
             @RequestBody OrganizationApplicationRequest request) {
 
-        String applicationExternalId = organizationApplicationService.apply(
+        String applicationExternalId = organizationApplicationAndOnboardingService.apply(
                 (User) auth.getPrincipal(),
                 request);
 
@@ -47,11 +46,11 @@ public class OrganizationRegistrationController {
     public ResponseEntity<?> approveApplication(
             @PathVariable("application-id")
             @NotBlank(message = "Application Id is required")
-            @Size(min = 36, max = 36)
+            @Size(max = 100)
             String applicationExternalId,
             Authentication authentication) {
 
-        organizationApplicationService.approve(
+        organizationApplicationAndOnboardingService.approve(
                 (User) authentication.getPrincipal(),
                 applicationExternalId
         );
@@ -72,7 +71,7 @@ public class OrganizationRegistrationController {
             String reason,
             Authentication authentication) {
 
-        organizationApplicationService.reject(
+        organizationApplicationAndOnboardingService.reject(
                 (User) authentication.getPrincipal(),
                 applicationExternalId,
                 reason
@@ -90,7 +89,7 @@ public class OrganizationRegistrationController {
             String applicationExternalId,
             Authentication auth) {
 
-        organizationApplicationService.cancel(applicationExternalId, (User) auth.getPrincipal());
+        organizationApplicationAndOnboardingService.cancel(applicationExternalId, (User) auth.getPrincipal());
         return ResponseEntity.ok().build();
     }
 
@@ -106,7 +105,7 @@ public class OrganizationRegistrationController {
             String comment,
             Authentication authentication) {
 
-        organizationApplicationService.comment(
+        organizationApplicationAndOnboardingService.comment(
                 (User) authentication.getPrincipal(),
                 applicationExternalId,
                 comment
@@ -119,7 +118,7 @@ public class OrganizationRegistrationController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ApplicationDTO>> getAllPendingApplications() {
         List<Application> pendingRegistrations =
-                organizationApplicationService.getAllOrganizationsWaitingForApproval();
+                organizationApplicationAndOnboardingService.getAllOrganizationsWaitingForApproval();
         return ResponseEntity.ok(null);
     }
 

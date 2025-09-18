@@ -11,38 +11,39 @@ import org.springframework.security.core.Authentication;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public class CustomPermissionEvaluator implements PermissionEvaluator {
 
     @Override
-    public boolean hasPermission(Authentication auth, Object targetDomainObject, Object permission) {
+    public boolean hasPermission(Authentication auth, Object targetDomainObject,    Object permission) {
         if (auth == null || !auth.isAuthenticated()) {
             return false;
         }
-
-        // Get the UserPrincipal from authentication
-        User userPrincipal = (User) auth.getPrincipal();
-
-        // targetDomainObject should be the user role(String)
-        String requiredRole = (String) targetDomainObject;
-
-        if(permission == null && userPrincipal.getRole().equals(requiredRole) ){
-            return true;
-        }
-        List<Permission> requiredPermissions = (List<Permission>) permission;
-
-        // Check if user type matches (if specified)
-        if (requiredRole != null && !requiredRole.isEmpty()) {
-            if (!requiredRole.equals(userPrincipal.getRole())) {
-                return false;
-            }
-        }
-
-        // Check if user has all required permissions
-        if (requiredPermissions != null && !requiredPermissions.isEmpty()) {
-            return hasAllRequiredPermissions(userPrincipal.getPermissions(), requiredPermissions);
-        }
+//
+//        // Get the UserPrincipal from authentication
+//        User userPrincipal = (User) auth.getPrincipal();
+//
+//        // targetDomainObject should be the user role(String)
+//        String requiredRole = (String) targetDomainObject;
+//
+//        if(permission == null && userPrincipal.getRole().equals(requiredRole) ){
+//            return true;
+//        }
+//        List<Permission> requiredPermissions = (List<Permission>) permission;
+//
+//        // Check if user type matches (if specified)
+//        if (requiredRole != null && !requiredRole.isEmpty()) {
+//            if (!requiredRole.equals(userPrincipal.getRole())) {
+//                return false;
+//            }
+//        }
+//
+//        // Check if user has all required permissions
+//        if (requiredPermissions != null && !requiredPermissions.isEmpty()) {
+//            return hasAllRequiredPermissions(userPrincipal.getPermissions(), requiredPermissions);
+//        }
 
         return true; // If no specific requirements, allow access
     }
@@ -52,20 +53,26 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
         User userPrincipal = (User) auth.getPrincipal();
         String externalId = (String) targetId;
 
-        Optional<ResourceType> resourceType = Option.fromName(ResourceType.class, targetType);
-        if (resourceType.isEmpty()) {
-            throw new IllegalArgumentException("resource type not found: " + targetType);
-        }
+        ResourceType resourceType = Option.fromName(ResourceType.class, targetType)
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Invalid resource type")
+                );
 
-        if (!(permission instanceof Map<?, ?> permMap)) {
-            throw new IllegalArgumentException("permission must be a Map<String, String>");
+        if(!Objects.isNull(permission)){
+            if (!(permission instanceof Map<?, ?>)) {
+                throw new IllegalArgumentException("permission must be a Map<String, String>");
+            }
         }
-
-        @SuppressWarnings("unchecked")
-        Map<String, String> requiredPermission = (Map<String, String>) permMap;
 
         for (Permission p : userPrincipal.getPermissions()) {
             if (p.getResource() != null && externalId.equals(String.valueOf(p.getResource().getExternalId()))) {
+
+                if(Objects.isNull(permission)){
+                    return true;
+                }
+
+                Map<String, String> requiredPermission = (Map<String, String>) permission;
+
                 Map<Privilege, AccessLevel> userPermission = p.getPermission();
                 if (userPermission == null) continue;
 

@@ -30,9 +30,9 @@ public class PermissionMapper {
                                                 e -> e.getValue().getName() // access level name
                                         ))
                         )
-                        .grantedAt(p.getGrantedAt())
+                        //.grantedAt(p.getGrantedAt())
                        // .grantedByUserExternalId(p.getGrantedBy().getExternalId().toString())
-                        .expiresAt(p.getExpiresAt())
+                       // .expiresAt(p.getExpiresAt())
                         .build())
                 .toList();
     }

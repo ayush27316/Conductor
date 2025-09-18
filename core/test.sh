@@ -262,3 +262,28 @@ echo "User JWT Token: $user_jwt"
 echo "Admin JWT Token: $admin_jwt"
 echo "Organization JWT Token: $org_jwt"
 echo "Registration ID: $application_id"
+
+
+
+curl -s -w "\n%{http_code}" --request POST \
+  --url "http://localhost:8082/api/events/register" \
+  --header "authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ4SGFja3MiLCJ1c2VyX2V4dGVybmFsX2lkIjoiLTExMzgzMjY5MzMxMTE0MDcyNyIsInBlcm1pc3Npb25zIjoiW3tcInBlcm1pc3Npb25zXCI6e30sXCJyZXNvdXJjZV9uYW1lXCI6XCJvcmdhbml6YXRpb25cIixcInJlc291cmNlX2lkXCI6XCI4NTQ1NDkyOTY4MTg4Mzg5OTMzXCIsXCJncmFudGVkX2F0XCI6bnVsbCxcImdyYW50ZWRfYnlfdXNlcl9pZFwiOm51bGwsXCJleHBpcmVzX2F0XCI6bnVsbH1dIiwidXNlcl9yb2xlIjoiT1BFUkFUT1IiLCJpYXQiOjE3NTgxNjAyNTgsImV4cCI6MTc1ODE2Mzg1OH0.u0jA9vSiPGnJFgfbBip_LhbFmHQJob09yOFDuXurhpJkD2lOxMRlvSDGQT0hLKNI_WQJ4WR0tgMAgPAK5FQGFw" \
+  --header 'content-type: application/json' \
+  --data '{
+  "name": "Tech  24 2025",
+  "organization_id": "f3bd4cb7-68a2-4189-bffa-5d24eff4951c",
+  "location": "Montreal, Canada",
+  "begin_time": "2026-09-01T09:00:00Z",
+  "end_time": "2026-09-01T17:00:00Z",
+  "access_strategy": "once",
+  "format": "online",
+  "is_free": true,
+  "options": [
+    "requires_payment",
+    "requires_approval"
+  ],
+  "accessible_from": "2025-08-01T00:00:00",
+  "accessible_to": "2025-08-25T23:59:59",
+  "total_tickets_to_be_sold": 100,
+  "description": "tech event"
+}'

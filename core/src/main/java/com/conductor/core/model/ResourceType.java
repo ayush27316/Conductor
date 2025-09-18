@@ -1,28 +1,28 @@
-package com.conductor.core.model;
+    package com.conductor.core.model;
 
-/**
- * Defines all the resources in the system.
- */
-public enum ResourceType implements Option {
+    /**
+     * Defines all the resources in the system.
+     */
+    public enum ResourceType implements Option {
 
-    ORGANIZATION("organization"),
-    EVENT("event"),
-    USER("user"),
-    OPERATOR("operator"),
-    FORM("form"),
-    FILE("file"),
-    APPLICATION("application"),
-    TICKET("ticket");
+        ORGANIZATION("organization"),
+        EVENT("event"),
+        USER("user"),
+        OPERATOR("operator"),
+        FORM("form"),
+        FILE("file"),
+        APPLICATION("application"),
+        TICKET("ticket");
 
-    private final String name;
+        private final String name;
 
-    ResourceType(String name) {
-        this.name = name;
+        ResourceType(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+
     }
-
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
-}
