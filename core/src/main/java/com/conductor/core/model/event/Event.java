@@ -44,13 +44,13 @@ public class Event extends Resource {
     @Embedded
     private EventAccessDetails accessDetails;
 
+    private LocalDateTime applicationOpen;
+    private LocalDateTime applicationClose;
+
     @Embedded
     private EventCheckInDetails checkInDetails;
 
-    /**
-     * If {@code EventOption.REQUIRE_APPROVAL} is selected then form
-     * is required.
-     */
+
     @ManyToOne
     @JoinColumn(name = "application_form")
     private Form applicationForm;

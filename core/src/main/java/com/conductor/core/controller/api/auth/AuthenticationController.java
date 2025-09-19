@@ -13,6 +13,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -26,9 +27,13 @@ public class AuthenticationController {
     public ResponseEntity<?> login(
             @Valid @RequestBody LoginRequest loginRequest) {
         try {
-
             String jwt = authenticationService.login(loginRequest);
-            return ResponseEntity.ok().body(Map.of("jwt",jwt));
+            Map<String,String> body = new HashMap<>();
+            body.put("access_token", jwt);
+            body.put("token_type", "Bearer");
+            body.put("expires_in", "3600000");
+            //body.put("refresh_token", "");
+            return ResponseEntity.ok().body(body);
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

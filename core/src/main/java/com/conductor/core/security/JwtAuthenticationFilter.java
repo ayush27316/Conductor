@@ -3,6 +3,7 @@ package com.conductor.core.security;
 import com.conductor.core.dto.permission.PermissionDTO;
 import com.conductor.core.exception.TokenNotValidException;
 import com.conductor.core.model.user.User;
+import com.conductor.core.model.user.UserRole;
 import com.conductor.core.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -57,15 +58,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 try {
                     String userExternalId = jwtUtil.getExternalId(token);
-                    /*
-                     * giving permissions and roles out promotes front-end builder
-                     * to only present options that are relevant to this user
-                     * */
-                    //List<PermissionDTO> permissionDTOS = jwtUtil.getPermissions(token);
-                    //String userRole = jwtUtil.getUserRole(token);
+                    UserRole userRole = jwtUtil.getUserRole(token);
+                    List<PermissionDTO> permissionDTOS = jwtUtil.getPermissions(token);
 
                     if (userExternalId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        User userPrincipal = userRepository.findByExternalId(userExternalId).get();
+                        UserPrincipal userPrincipal = UserPrincipal.builder()
+                                .externalId(userExternalId)
+                                .role(userRole)
+                                .permissions(permissionDTOS)
+                                .build();
 
                         UsernamePasswordAuthenticationToken auth =
                                 new UsernamePasswordAuthenticationToken(

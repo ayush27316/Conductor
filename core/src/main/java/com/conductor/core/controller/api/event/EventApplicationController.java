@@ -3,12 +3,20 @@ package com.conductor.core.controller.api.event;
 import com.conductor.core.dto.ApplicationDTO;
 import com.conductor.core.dto.FormResponse;
 import com.conductor.core.model.ResourceType;
+import com.conductor.core.model.event.EventPrivilege;
 import com.conductor.core.model.file.File;
+import com.conductor.core.model.org.OrganizationPrivilege;
+import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.user.User;
+import com.conductor.core.model.user.UserRole;
+import com.conductor.core.security.fiber.FiberIdentityProvider;
+import com.conductor.core.security.fiber.FiberPermissionEvaluator;
+import com.conductor.core.security.fiber.FiberPermissionEvaluatorChain;
 import com.conductor.core.service.EventApplicationService;
 import com.conductor.core.service.FileService;
+import com.conductor.core.util.Pair;
+import com.stripe.model.tax.Registration;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +24,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import static com.conductor.core.security.fiber.FiberPermissionEvaluator.hasPermission;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,13 +46,13 @@ import java.util.Map;
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "Event Applications", description = "APIs for managing event applications and reservations")
 public class EventApplicationController {
 
     private final EventApplicationService eventApplicationService;
     private final FileService fileService;
+    private final FiberPermissionEvaluator permissionEvaluator;
+    private final FiberIdentityProvider identityProvider;
 
-    @PreAuthorize("hasRole('USER')")
     @PostMapping("/{event-id}/apply")
     public ResponseEntity<?> applyForEvent(
             @PathVariable("event-id")
@@ -62,11 +70,6 @@ public class EventApplicationController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-
-    //an operator with event level permission
-    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
-    //an operator with organization level permission
-    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @PutMapping("/applications/{application-id}/approve")
     public ResponseEntity<?> approveApplication(
             @PathVariable("application-id")
@@ -75,6 +78,14 @@ public class EventApplicationController {
             String applicationExternalId,
             Authentication authentication) {
 
+        Pair<String,String> parent = identityProvider.getApplicationParent(applicationExternalId);
+
+         FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                .isOperator()
+                .orPermission(parent.getLeft(), ResourceType.ORGANIZATION, Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE))
+                .orPermission(parent.getRight(), ResourceType.EVENT, Map.of(EventPrivilege.APPLICATION, AccessLevel.WRITE))
+                .evaluate(authentication);
+        //
         eventApplicationService.approveEventApplication(
                 (User)authentication.getPrincipal(),
                 applicationExternalId
@@ -84,10 +95,6 @@ public class EventApplicationController {
     }
 
 
-    //an operator with event level permission
-    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
-    //an operator with organization level permission
-    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @PutMapping("/applications/{application-id}/reject")
     public ResponseEntity<?> rejectApplication(
             @PathVariable("application-id")
@@ -99,6 +106,13 @@ public class EventApplicationController {
             String reason,
             Authentication authentication) {
 
+        Pair<String,String> parent = identityProvider.getApplicationParent(applicationExternalId);
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                .isOperator()
+                .orPermission(parent.getLeft(), ResourceType.ORGANIZATION, Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE))
+                .orPermission(parent.getRight(), ResourceType.EVENT, Map.of(EventPrivilege.APPLICATION, AccessLevel.WRITE))
+                .evaluate(authentication);
+
         eventApplicationService.rejectEventApplication(
                 (User) authentication.getPrincipal(),
                 applicationExternalId,
@@ -108,7 +122,6 @@ public class EventApplicationController {
         return ResponseEntity.ok().build();
     }
 
-//    @PreAuthorize("hasPermission(#application-id, 'application', null)")
     @DeleteMapping("/applications/{application-id}")
     public ResponseEntity<?> cancelApplication(
             @PathVariable("application-id")
@@ -117,16 +130,14 @@ public class EventApplicationController {
             String applicationExternalId,
             Authentication auth) {
 
+        if(permissionEvaluator.hasPermission(auth,applicationExternalId,ResourceType.APPLICATION,null)){
+            throw new AccessDeniedException("You do not permissions to cancel this application");
+        };
+
         eventApplicationService.cancelEventApplication(applicationExternalId, (User) auth.getPrincipal());
         return ResponseEntity.ok().build();
     }
 
-    // the user who submitted the application
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)") or
-    //an operator with event level permission
-    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
-    //an operator with organization level permission
-    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @PostMapping("/applications/{application-id}/comments")
     public ResponseEntity<?> comment(
             @PathVariable("application-id")
@@ -138,7 +149,18 @@ public class EventApplicationController {
             String comment,
             Authentication authentication) {
 
-        System.out.println(comment);
+
+        Pair<String,String> parent = identityProvider.getApplicationParent(applicationExternalId);
+
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                //organization owner
+                .orPermission(parent.getLeft(), ResourceType.ORGANIZATION, Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE))
+                //event level operator
+                .orPermission(parent.getRight(), ResourceType.EVENT, Map.of(EventPrivilege.APPLICATION, AccessLevel.WRITE))
+                //user whp submitted the application
+                .orPermission(applicationExternalId, ResourceType.APPLICATION, null)
+                .evaluate(authentication);
+
         eventApplicationService.comment(
                 (User)authentication.getPrincipal(),
                 applicationExternalId,
@@ -148,20 +170,22 @@ public class EventApplicationController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    //an operator with event level permission
-    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
-    //an operator with organization level permission
-    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
     @GetMapping("/{event-id}/applications")
     public ResponseEntity<?> getEventApplications(
             @Parameter(description = "External ID of the event", required = true)
-            @PathVariable("event-id") @NotBlank String eventExternalId) {
+            @PathVariable("event-id") @NotBlank String eventExternalId,
+            Authentication authentication) {
+
+
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                .orPermission(identityProvider.getRootResource(ResourceType.ORGANIZATION,eventExternalId), ResourceType.ORGANIZATION, Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE))
+                .orPermission(eventExternalId, ResourceType.EVENT, Map.of(EventPrivilege.APPLICATION, AccessLevel.WRITE))
+                .evaluate(authentication);
 
         List<ApplicationDTO> applications = eventApplicationService.getEventApplications(eventExternalId);
         return ResponseEntity.ok(applications);
     }
 
-    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{event-id}/form")
     public ResponseEntity<?> getEventForm(
             @Parameter(description = "External ID of the event", required = true)
@@ -172,7 +196,6 @@ public class EventApplicationController {
         return ResponseEntity.ok(Map.of("form",form));
     }
 
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)")
     @PostMapping("/{application-id}/files/")
     public ResponseEntity<?> uploadFile(
             @PathVariable("application-id")
@@ -182,15 +205,14 @@ public class EventApplicationController {
             @RequestParam("file") MultipartFile file,
             Authentication authentication) {
 
+        if(permissionEvaluator.hasPermission(authentication,eventApplicationExternalId,ResourceType.APPLICATION,null)){
+            throw new AccessDeniedException("You do not permissions to upload files to this application");
+        };
+
         eventApplicationService.storeFile(file,eventApplicationExternalId, (User) authentication.getPrincipal());
         return ResponseEntity.ok().build();
     }
-    // the user who submitted the application
-    //@PreAuthorize("hasPermission(#application-id, 'application', null)") or
-    //an operator with event level permission
-    //@PreAuthorize("hasPermission(#event-id, 'event', {'application':'write'})") or
-    //an operator with organization level permission
-    //@PreAuthorize("hasPermission(#organization-id, 'organization', {'event':'write'})")
+
     @GetMapping("/{application-id}/files/{file-id}")
     public ResponseEntity<byte[]> downloadFile(
                     @PathVariable("application-id")
@@ -204,14 +226,16 @@ public class EventApplicationController {
                     Authentication auth
                     )
     {
-        //must be an event applciation
-        //then application_id = organization organization_hash.event_hash.applicaiton_hash.sign
+        Pair<String,String> parent = identityProvider.getApplicationParent(applicationExternalId);
 
-        String[] parts = applicationExternalId.split("\\.");
-        List<String> result = Arrays.asList(parts);
-
-
-        hasPermission(auth,applicationExternalId, ResourceType.APPLICATION,null);
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                //organization owner
+                .orPermission(parent.getLeft(), ResourceType.ORGANIZATION, Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE))
+                //event level operator
+                .orPermission(parent.getRight(), ResourceType.EVENT, Map.of(EventPrivilege.APPLICATION, AccessLevel.WRITE))
+                //user whp submitted the application
+                .orPermission(applicationExternalId, ResourceType.APPLICATION, null)
+                .evaluate(auth);
 
 
         File file = fileService.getFile(fileExternalId);
@@ -221,4 +245,6 @@ public class EventApplicationController {
                 .contentType(MediaType.parseMediaType(file.getContentType()))
                 .body(file.getData());
     }
+
+
 }

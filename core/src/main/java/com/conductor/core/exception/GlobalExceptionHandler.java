@@ -278,8 +278,8 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-
     }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Error> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         Throwable cause = ex.getCause();
@@ -320,6 +320,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(fallbackError);
     }
 
+
+
+    @ExceptionHandler(UsernameAlreadyTakenException.class)
+    public ResponseEntity<Error> handle(
+            UsernameAlreadyTakenException ex, WebRequest request) {
+
+        Error error = Error.builder()
+                .error(HttpStatus.CONFLICT.toString())
+                .success(false)
+                .message("Username Already Taken")
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
 
     @ExceptionHandler(OrganizationNotFound.class)
     public ResponseEntity<Error> handleOrganizationNotFound(

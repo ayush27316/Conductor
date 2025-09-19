@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -271,4 +272,38 @@ public class EventApplicationService {
         Application application = applicationManager.findApplication(eventApplicationExternalId);
         fileService.storeFile(file, Optional.of(application), uploadedBy);
     }
+
+    @Transactional
+    public void openApplications(String eventExternalId) {
+        Event event = eventRepository.findByExternalId(eventExternalId).orElseThrow(
+                () -> new EventNotFoundException()
+        );
+
+        LocalDateTime start = event.getApplicationOpen();
+        if(!Objects.isNull(start)) {
+            //check if applications are already open
+            if(start.isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Applications for this event are already open");
+            }
+        }
+        event.setApplicationOpen(LocalDateTime.now());
+    }
+
+    @Transactional
+    public void closeApplications(String eventExternalId) {
+        Event event = eventRepository.findByExternalId(eventExternalId).orElseThrow(
+                () -> new EventNotFoundException()
+        );
+
+        LocalDateTime end = event.getApplicationClose();
+        if(!Objects.isNull(end)) {
+            //check if applications are already closed
+            if(end.isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Applications for this event are already closed");
+            }
+        }
+        event.setApplicationClose(LocalDateTime.now());
+    }
+
+
 }

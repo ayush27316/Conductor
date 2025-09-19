@@ -6,6 +6,7 @@ import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.org.Organization;
+import com.conductor.core.util.Pair;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -186,5 +187,23 @@ public class FiberIdentityProvider implements ExternalIdentityProvider {
             throw new RuntimeException(e);
         }
         return  value + "." + bytesToHex(sign);
+    }
+
+    public String getRootResource(ResourceType type, String resourceExternalId){
+        int dotIndex = resourceExternalId.indexOf(".");
+        String rootId;
+
+        if (dotIndex != -1) {
+            rootId = resourceExternalId.substring(0, dotIndex);
+        } else {
+            // no dot found, return the whole string
+            rootId = resourceExternalId;
+        }
+        return rootId;
+    }
+
+    public Pair<String,String> getApplicationParent(String applicationExternalId){
+        String[] ids = applicationExternalId.split(".");
+        return Pair.of(ids[0], ids[1]);
     }
 }

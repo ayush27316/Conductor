@@ -7,13 +7,19 @@ import com.conductor.core.model.org.Organization;
 import com.conductor.core.model.user.Operator;
 import com.conductor.core.model.user.User;
 import com.conductor.core.repository.*;
+import com.conductor.core.security.UserPrincipal;
 import com.conductor.core.util.Utils;
+import static com.conductor.core.util.Utils.updateIfNotNull;
+import static com.conductor.core.util.Utils.updateIfNotEmpty;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import static org.springframework.util.Assert.isTrue;
 import static  org.springframework.util.Assert.notNull;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -24,10 +30,15 @@ public class EventRegistrationAndModificationService {
     private final EventRepository eventRepository;
     private final OperatorRepository operatorRepository;
     private final ResourceAuditRepository resourceAuditRepository;
+    private final OrganizationRepository organizationRepository;
 
+    /**applicationsClose
+     * @throws IllegalArgumentException
+     * @throws DataAccessException
+     */
     @Transactional
     public String registerEvent(
-            User user,
+            String organizationExternalId,
             EventModification request) {
 
         notNull(request.getName(), "Event name is required");
@@ -48,10 +59,15 @@ public class EventRegistrationAndModificationService {
 //            Assert.notNull(currency, "Currency is required when event is not free");
           }
 
-        Operator operator = operatorRepository.findByUser_ExternalId(user.getExternalId())
-                .orElseThrow(() -> new OperatorNotFoundException(user.getId()));
+//        Operator operator = operatorRepository.findByUser_ExternalId(user.getExternalId())
+//                .orElseThrow(() -> new OperatorNotFoundException(user.getId()));
+//
+//        Organization org = operator.getOrganization();
 
-        Organization org = operator.getOrganization();
+        //since only an operator has access to this service
+        //and we infer the organization  id from the operator
+        //so if there are no data access exception result can't be empty
+        Organization org = organizationRepository.findByExternalId(organizationExternalId).get();
 
         Event event = modificationToEvent(request);
         event.setOrganization(org);
@@ -68,9 +84,13 @@ public class EventRegistrationAndModificationService {
         return event.getExternalId();
     }
 
+    /**
+     * @throws IllegalArgumentException
+     * @throws EventNotFoundException
+     * @throws DataAccessException
+     */
     @Transactional
     public void modifyEvent(
-            User user,
             String eventExternalId,
             EventModification request)
     {
@@ -78,11 +98,10 @@ public class EventRegistrationAndModificationService {
                 .orElseThrow(() -> new EventNotFoundException());
 
         applyModification(event, request);
-//
-//        resourceAuditRepository.save(ResourceAudit.forUpdate(event, user));
-//
+
         eventRepository.save(event);
     }
+
 
     private void applyModification(Event event, EventModification em) {
 
@@ -92,11 +111,11 @@ public class EventRegistrationAndModificationService {
         Utils.updateIfNotNull(event::setBegin, em.getBegin());
         Utils.updateIfNotNull(event::setEnd, em.getEnd());
         Utils.updateIfNotNull(event::setDescription, em.getDescription());
+        Utils.updateIfNotEmpty(event::setOptions, em.getOptions());
 
         if (em.getTotalTicketsToBeSold() > 0) {
             event.setTotalTicketsToBeSold(em.getTotalTicketsToBeSold());
         }
-        Utils.updateIfNotEmpty(event::setOptions, em.getOptions());
 
         updateAccessDetails(event, em);
         updatePaymentDetails(event, em);

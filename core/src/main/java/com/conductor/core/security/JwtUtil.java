@@ -44,9 +44,10 @@ public class JwtUtil {
 
             return Jwts.builder()
                     .subject(user.getUsername())
-                    .claim("user_external_id", user.getExternalId())
+                    .claim("user_id", user.getExternalId())
                     .claim("permissions", permissionsJson)
                     .claim("user_role", user.getRole().getName())
+                    //.claim("organization_id", user.getOrganization().getExternalId())
                     .issuedAt(new Date())
                     .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
                     .signWith(getSecretKey())
@@ -68,7 +69,7 @@ public class JwtUtil {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            return claims.get("user_external_id", String.class);
+            return claims.get("user_id", String.class);
         } catch (Exception e) {
             log.error("Error extracting externalId from JWT: {}", e.getMessage(), e);
             throw new RuntimeException("Error extracting externalId", e);
@@ -107,6 +108,7 @@ public class JwtUtil {
             return false;
         }
     }
+
 
 
     public UserRole getUserRole(String token) {

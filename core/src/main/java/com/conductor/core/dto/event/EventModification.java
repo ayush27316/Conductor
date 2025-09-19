@@ -30,6 +30,7 @@ public class EventModification {
 //    @JsonProperty("organization_id")
 //    private String organizationId;
 
+
 //    @NotBlank(message = "Event name is required")
     @Size(max = 100, message = "Event name cannot exceed 100 characters")
     @Schema(description = "Name of the event")
@@ -89,6 +90,11 @@ public class EventModification {
     @JsonProperty("accessible_to")
     @Schema(description = "Date and time when event registration closes", example = "2025-08-25T23:59:59")
     private LocalDateTime accessibleTo;
+
+    @JsonProperty("application_open")
+    private LocalDateTime applicationsOpen;
+    @JsonProperty("applications_close")
+    private LocalDateTime applicationsClose;
 
     //@NotNull(message = "description is required")
     private String description;

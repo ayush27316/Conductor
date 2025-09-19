@@ -87,4 +87,12 @@ public class Utils {
             }
         }
     }
+
+    public static void throwIfAnyFalse(RuntimeException e, boolean... conditions) {
+        for (boolean condition : conditions) {
+            if (!condition) {
+                throw e;
+            }
+        }
+    }
 }

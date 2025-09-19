@@ -31,11 +31,11 @@ public class EventAccessDetails {
 
     private int accessibleNumberOfTimes;
 
-    @Column(name = "accessible_from", nullable = false)
+    @Column(name = "accessible_from")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime accessibleFrom;
 
-    @Column(name = "accessible_to", nullable = false)
+    @Column(name = "accessible_to")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime accessibleTo;
 
