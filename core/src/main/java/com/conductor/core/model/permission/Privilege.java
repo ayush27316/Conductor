@@ -52,6 +52,16 @@ public interface Privilege extends Option {
         static <E extends Enum<E> & Privilege> Optional<E> safeCast(Class<E> targetPrivilegeClass, String name) {
             return Option.fromName(targetPrivilegeClass, name);
         }
+
+        default boolean equals(Privilege other) {
+
+            //we do not need to check as we ensure that the class that got into the permission
+            // was indeed the right privilege class.
+//            return this.getClass() == other.getClass()
+//                    && this.getName().equalsIgnoreCase(other.getName());
+
+            return this.getName().equalsIgnoreCase(other.getName());
+        }
 }
 
 

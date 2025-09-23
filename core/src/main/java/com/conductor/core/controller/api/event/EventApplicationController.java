@@ -9,6 +9,7 @@ import com.conductor.core.model.org.OrganizationPrivilege;
 import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.user.User;
 import com.conductor.core.model.user.UserRole;
+import com.conductor.core.security.UserPrincipal;
 import com.conductor.core.security.fiber.FiberIdentityProvider;
 import com.conductor.core.security.fiber.FiberPermissionEvaluator;
 import com.conductor.core.security.fiber.FiberPermissionEvaluatorChain;
@@ -63,7 +64,7 @@ public class EventApplicationController {
             Authentication authentication) {
 
          String applicationExternalId = eventApplicationService.apply(
-                        (User)authentication.getPrincipal(),
+                        (UserPrincipal)authentication.getPrincipal(),
                         eventExternalId,
                         formResponse.getFormResponse());
 
@@ -87,7 +88,7 @@ public class EventApplicationController {
                 .evaluate(authentication);
         //
         eventApplicationService.approveEventApplication(
-                (User)authentication.getPrincipal(),
+                (UserPrincipal)authentication.getPrincipal(),
                 applicationExternalId
                 );
 
@@ -114,7 +115,7 @@ public class EventApplicationController {
                 .evaluate(authentication);
 
         eventApplicationService.rejectEventApplication(
-                (User) authentication.getPrincipal(),
+                (UserPrincipal) authentication.getPrincipal(),
                 applicationExternalId,
                 reason
         );
@@ -134,7 +135,7 @@ public class EventApplicationController {
             throw new AccessDeniedException("You do not permissions to cancel this application");
         };
 
-        eventApplicationService.cancelEventApplication(applicationExternalId, (User) auth.getPrincipal());
+        eventApplicationService.cancelEventApplication((UserPrincipal) auth.getPrincipal(), applicationExternalId);
         return ResponseEntity.ok().build();
     }
 
@@ -162,7 +163,7 @@ public class EventApplicationController {
                 .evaluate(authentication);
 
         eventApplicationService.comment(
-                (User)authentication.getPrincipal(),
+                (UserPrincipal)authentication.getPrincipal(),
                 applicationExternalId,
                 comment
         );
@@ -209,7 +210,7 @@ public class EventApplicationController {
             throw new AccessDeniedException("You do not permissions to upload files to this application");
         };
 
-        eventApplicationService.storeFile(file,eventApplicationExternalId, (User) authentication.getPrincipal());
+        eventApplicationService.storeFile((UserPrincipal) authentication.getPrincipal(), file,eventApplicationExternalId);
         return ResponseEntity.ok().build();
     }
 

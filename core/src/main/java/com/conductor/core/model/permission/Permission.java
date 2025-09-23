@@ -35,8 +35,7 @@ public class Permission extends BaseEntity {
      * The user this permission is granted to
      */
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "granted_to_id_fk", nullable = false)
-    @JsonBackReference
+    @JoinColumn(name = "granted_to_user_id_fk", nullable = false)
     private User grantedTo;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -60,20 +59,20 @@ public class Permission extends BaseEntity {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
+    public void setPermission(Map<Privilege, AccessLevel> newPermission){
+         if(newPermission != null){
+             permission = newPermission;
+         }
+    }
+
     /**
      *
      * @return An immutable reference to Permissions map. To change the permission
      * you must use {@link #setPermission(Map)} method which replaces the existing map
      * with the provided map.
      */
-    public Map<Privilege, AccessLevel> getPermission(){
-        return permission.isEmpty() ? Map.copyOf(permission): new HashMap<>();
-    }
-
-    public void setPermission(Map<Privilege, AccessLevel> newPermission){
-         if(newPermission != null){
-             permission = newPermission;
-         }
+    public Map<Privilege, AccessLevel> getPermission() {
+        return Map.copyOf(permission); // always return an unmodifiable copy
     }
 
     @PrePersist

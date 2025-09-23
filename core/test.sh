@@ -81,7 +81,7 @@ if [ "$login_status" -ne 200 ]; then
 fi
 
 # Extract JWT token
-user_jwt=$(extract_json_value "$login_body" "jwt")
+user_jwt=$(extract_json_value "$login_body" "access_token")
 
 if [ -z "$user_jwt" ]; then
     print_error "Failed to extract JWT token from login response"
@@ -152,7 +152,7 @@ if [ "$admin_login_status" -ne 200 ]; then
 fi
 
 # Extract admin JWT token
-admin_jwt=$(extract_json_value "$admin_login_body" "jwt")
+admin_jwt=$(extract_json_value "$admin_login_body" "access_token")
 
 if [ -z "$admin_jwt" ]; then
     print_error "Failed to extract admin JWT token from login response"
@@ -201,7 +201,7 @@ if [ "$org_login_status" -ne 200 ]; then
 fi
 
 # Extract organization JWT token
-org_jwt=$(extract_json_value "$org_login_body" "jwt")
+org_jwt=$(extract_json_value "$org_login_body" "access_token")
 
 if [ -z "$org_jwt" ]; then
     print_error "Failed to extract organization JWT token from login response"
@@ -215,7 +215,7 @@ echo "Organization JWT Token: $org_jwt"
 # Step 7: Create a new event
 print_info "Step 7: Creating new event..."
 event_response=$(curl -s -w "\n%{http_code}" --request POST \
-  --url "$BASE_URL/api/events/register" \
+  --url "$BASE_URL/api/v1/events/register" \
   --header "authorization: Bearer $org_jwt" \
   --header 'content-type: application/json' \
   --data '{
@@ -287,3 +287,12 @@ curl -s -w "\n%{http_code}" --request POST \
   "total_tickets_to_be_sold": 100,
   "description": "tech event"
 }'
+
+
+
+#curl -X POST "http://localhost:8082/api/v1/events/935225981937173195.-7106820603409930071.bc21d9d092636678a7550bc9b37229ca/modify" \
+#  -H "Content-Type: application/json" \
+#  -H "Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkIjoiMTEyNzYzMTQ1MDAwNTQ5NzE3NyIsInBlcm1pc3Npb25zIjoiW3tcInBlcm1pc3Npb25zXCI6e30sXCJyZXNvdXJjZV90eXBlXCI6XCJPUkdBTklaQVRJT05cIixcInJlc291cmNlX2lkXCI6XCI5MzUyMjU5ODE5MzcxNzMxOTVcIixcImdyYW50ZWRfYXRcIjpudWxsLFwiZ3JhbnRlZF9ieV91c2VyX2lkXCI6bnVsbCxcImV4cGlyZXNfYXRcIjpudWxsfV0iLCJ1c2VyX3JvbGUiOiJPUEVSQVRPUiIsIm9yZ2FuaXphdGlvbl9pZCI6IjkzNTIyNTk4MTkzNzE3MzE5NSIsImlhdCI6MTc1ODU2Mzg1MCwiZXhwIjoxNzU4NTY3NDUwfQ.hk_rgXx7xvdUe6zK6JqsqR_KIWeDkzHRmvC98bjotjkDvJnUtJhKKSEzLEjqautC6-WNGLceY1CZrbQj--YhMw" \
+#  -d '{
+#    "description": "A premier AI event bringing together researchers and industry experts."
+#  }'

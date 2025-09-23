@@ -1,14 +1,20 @@
 package com.conductor.core.controller.api.organization;
 
 import com.conductor.core.dto.*;
+import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.application.Application;
 import com.conductor.core.model.user.User;
+import com.conductor.core.model.user.UserRole;
+import com.conductor.core.security.UserPrincipal;
+import com.conductor.core.security.fiber.FiberPermissionEvaluator;
+import com.conductor.core.security.fiber.FiberPermissionEvaluatorChain;
 import com.conductor.core.service.OrganizationApplicationAndOnboardingService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
@@ -24,15 +30,15 @@ import java.util.Map;
 public class OrganizationRegistrationController {
 
     private final OrganizationApplicationAndOnboardingService organizationApplicationAndOnboardingService;
+    private final FiberPermissionEvaluator permissionEvaluator;
 
     @PostMapping("/apply")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> apply(
             Authentication auth,
             @RequestBody OrganizationApplicationRequest request) {
 
         String applicationExternalId = organizationApplicationAndOnboardingService.apply(
-                (User) auth.getPrincipal(),
+                (UserPrincipal) auth.getPrincipal(),
                 request);
 
         Map<String, String> body = Map.of("application_id", applicationExternalId);
@@ -41,17 +47,21 @@ public class OrganizationRegistrationController {
     }
 
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/applications/{application-id}/approve")
     public ResponseEntity<?> approveApplication(
             @PathVariable("application-id")
             @NotBlank(message = "Application Id is required")
             @Size(max = 100)
             String applicationExternalId,
-            Authentication authentication) {
+            Authentication auth) {
+
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                .addRole(UserRole.ADMIN)
+                .evaluate(auth);
+
 
         organizationApplicationAndOnboardingService.approve(
-                (User) authentication.getPrincipal(),
+                (UserPrincipal) auth.getPrincipal(),
                 applicationExternalId
         );
 
@@ -59,7 +69,6 @@ public class OrganizationRegistrationController {
     }
 
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/applications/{application-id}/reject")
     public ResponseEntity<?> rejectApplication(
             @PathVariable("application-id")
@@ -69,10 +78,14 @@ public class OrganizationRegistrationController {
             @RequestParam @NotBlank(message = "Rejection reason cannot be blank")
             @Size(max = 200, message = "Reason must be at most 200 characters")
             String reason,
-            Authentication authentication) {
+            Authentication auth) {
+
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                .addRole(UserRole.ADMIN)
+                .evaluate(auth);
 
         organizationApplicationAndOnboardingService.reject(
-                (User) authentication.getPrincipal(),
+                (UserPrincipal) auth.getPrincipal(),
                 applicationExternalId,
                 reason
         );
@@ -80,7 +93,6 @@ public class OrganizationRegistrationController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasPermission(#application-id, 'application', null)")
     @DeleteMapping("/applications/{application-id}")
     public ResponseEntity<?> cancelApplication(
             @PathVariable("application-id")
@@ -89,11 +101,14 @@ public class OrganizationRegistrationController {
             String applicationExternalId,
             Authentication auth) {
 
-        organizationApplicationAndOnboardingService.cancel(applicationExternalId, (User) auth.getPrincipal());
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                .addPermission(applicationExternalId,ResourceType.APPLICATION,null)
+                .evaluate(auth);
+
+        organizationApplicationAndOnboardingService.cancel((UserPrincipal) auth.getPrincipal(), applicationExternalId);
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasPermission(#application-id, 'application', null) || hasRole('ADMIN')")
     @PostMapping("/applications/{application-id}/comments")
     public ResponseEntity<?> comment(
             @PathVariable("application-id")
@@ -103,10 +118,18 @@ public class OrganizationRegistrationController {
             @RequestParam @NotBlank(message = "Comment cannot be blank")
             @Size(max = 1000, message = "Comment cannot exceed 1000 characters")
             String comment,
-            Authentication authentication) {
+            Authentication auth) {
+
+
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                //either an ADMIN
+                .orRole(UserRole.ADMIN)
+                //or the user who submitted the application
+                .orPermission(applicationExternalId,ResourceType.APPLICATION,null)
+                .evaluate(auth);
 
         organizationApplicationAndOnboardingService.comment(
-                (User) authentication.getPrincipal(),
+                (UserPrincipal) auth.getPrincipal(),
                 applicationExternalId,
                 comment
         );
@@ -115,12 +138,15 @@ public class OrganizationRegistrationController {
     }
 
     @GetMapping("/applications/pending")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<ApplicationDTO>> getAllPendingApplications() {
+    public ResponseEntity<List<ApplicationDTO>> getAllPendingApplications(Authentication auth) {
+
+
+        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+                .orRole(UserRole.ADMIN)
+                .evaluate(auth);
+
         List<Application> pendingRegistrations =
                 organizationApplicationAndOnboardingService.getAllOrganizationsWaitingForApproval();
         return ResponseEntity.ok(null);
     }
-
-    //get all application pagination
 }

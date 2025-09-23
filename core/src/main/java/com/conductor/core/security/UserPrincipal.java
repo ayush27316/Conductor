@@ -1,14 +1,6 @@
 package com.conductor.core.security;
 
-import com.conductor.core.dto.permission.PermissionDTO;
-import com.conductor.core.model.Resource;
-import com.conductor.core.model.ResourceType;
-import com.conductor.core.model.org.Organization;
-import com.conductor.core.model.permission.Permission;
-import com.conductor.core.model.ticket.Ticket;
 import com.conductor.core.model.user.UserRole;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,10 +15,11 @@ import java.util.*;
 @AllArgsConstructor
 public class UserPrincipal implements UserDetails {
 
-    private String externalId;
+    private String username;
+    private String userExternalId;
     private UserRole role;
     private String organizationExternalId;
-    private List<PermissionDTO> permissions;
+    private List<PrincipalPermission> permissions;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

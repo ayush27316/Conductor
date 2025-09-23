@@ -15,6 +15,7 @@ import com.conductor.core.model.org.Organization;
 import com.conductor.core.model.org.OrganizationAudit;
 import com.conductor.core.model.user.User;
 import com.conductor.core.repository.*;
+import com.conductor.core.security.UserPrincipal;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -77,7 +78,7 @@ public class OrganizationApplicationAndOnboardingService {
      */
     @Transactional
     public String apply(
-            User submittedBy,
+            UserPrincipal submittedBy,
             OrganizationApplicationRequest request) {
 
         //check if organization name already exist
@@ -101,11 +102,13 @@ public class OrganizationApplicationAndOnboardingService {
             throw new RuntimeException("Organization registration failed." + e.getMessage(), e);
         }
 
+        User user = userRepository.findByExternalId(submittedBy.getUserExternalId()).get();
+
         Application application = null;
 
         try {
             application = applicationManager.registerApplication(
-                    submittedBy,
+                    user,
                     organization,
                     objectMapper.writeValueAsString(request)
             );
@@ -116,7 +119,7 @@ public class OrganizationApplicationAndOnboardingService {
         //grant user necessary permission to access the new application
         Permission permission =Permission.builder()
                             .resource(application)
-                            .grantedTo(submittedBy)
+                            .grantedTo(user)
                     .build();
         permissionRepository.save(permission);
 
@@ -150,11 +153,13 @@ public class OrganizationApplicationAndOnboardingService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void approve(
-            User approvedBy,
+            UserPrincipal approvedBy,
             String applicationExternalId) {
 
+        User user = userRepository.findByExternalId(approvedBy.getUserExternalId()).get();
+
         Application application =
-                applicationManager.approveApplication(approvedBy, applicationExternalId);
+                applicationManager.approveApplication(user, applicationExternalId);
 
         Resource target = application.getTargetResource();
         initiateOrganizationOnboarding(Resource.safeCast(Organization.class,target).get());
@@ -180,12 +185,14 @@ public class OrganizationApplicationAndOnboardingService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void reject(
-            User rejectedBy,
+            UserPrincipal rejectedBy,
             String applicationExternalId,
             String rejectionReason) {
 
+        User user = userRepository.findByExternalId(rejectedBy.getUserExternalId()).get();
+
         applicationManager.rejectEventApplication(
-                rejectedBy,
+                user,
                 applicationExternalId,
                 rejectionReason);
     }
@@ -208,8 +215,10 @@ public class OrganizationApplicationAndOnboardingService {
      * @see ApplicationManager#cancelEventApplication(String, User)
      */
     @Transactional
-    public void cancel(String applicationExternalId, User cancelledBy) {
-        applicationManager.cancelEventApplication(applicationExternalId, cancelledBy);
+    public void cancel(UserPrincipal cancelledBy, String applicationExternalId ) {
+        User user = userRepository.findByExternalId(cancelledBy.getUserExternalId()).get();
+
+        applicationManager.cancelEventApplication(applicationExternalId, user);
     }
 
     /**
@@ -218,7 +227,7 @@ public class OrganizationApplicationAndOnboardingService {
      * Comments can be used for communication between the applicant and reviewers
      * during the application review process.
      *
-     * @param user the {@link User} adding the comment (must not be {@code null})
+     * @param author the {@link UserPrincipal} adding the comment (must not be {@code null})
      * @param applicationExternalId the external ID of the application (must not be {@code null})
      * @param comment the comment text to add (must not be {@code null})
      *
@@ -230,9 +239,11 @@ public class OrganizationApplicationAndOnboardingService {
      */
     @Transactional
     public void comment(
-            User user,
+            UserPrincipal author,
             String applicationExternalId,
             String comment) {
+
+        User user = userRepository.findByExternalId(author.getUserExternalId()).get();
         applicationManager.addComment(user,applicationExternalId,comment);
     }
 
@@ -273,6 +284,7 @@ public class OrganizationApplicationAndOnboardingService {
 
         User user = User.builder()
                 .role(UserRole.OPERATOR)
+                .organization(org)
                 .username(org.getName())
                 .password(passwordEncoder.encode(org.getName()+"00xx"))
                 .firstName(org.getName())

@@ -55,7 +55,6 @@ public class User extends Resource implements UserDetails {
     private Organization organization;
 
     @OneToMany(mappedBy = "grantedTo", fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
-    @JsonManagedReference
     private List<Permission> permissions;
 
 //    @OneToMany(mappedBy = "submittedBy", fetch = FetchType.LAZY ,cascade = CascadeType.PERSIST)

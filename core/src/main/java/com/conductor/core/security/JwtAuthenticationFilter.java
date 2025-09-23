@@ -1,8 +1,6 @@
 package com.conductor.core.security;
 
-import com.conductor.core.dto.permission.PermissionDTO;
 import com.conductor.core.exception.TokenNotValidException;
-import com.conductor.core.model.user.User;
 import com.conductor.core.model.user.UserRole;
 import com.conductor.core.repository.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -19,8 +17,6 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Component
 @Slf4j
@@ -57,15 +53,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 };
 
                 try {
-                    String userExternalId = jwtUtil.getExternalId(token);
+                    String userExternalId = jwtUtil.getUserExternalId(token);
                     UserRole userRole = jwtUtil.getUserRole(token);
-                    List<PermissionDTO> permissionDTOS = jwtUtil.getPermissions(token);
+                    List<PrincipalPermission> principalPermissions = jwtUtil.getPermissions(token);
+                    String organizationExternalId = jwtUtil.getOrganizationExternalId(token);
 
                     if (userExternalId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                         UserPrincipal userPrincipal = UserPrincipal.builder()
-                                .externalId(userExternalId)
+                                .userExternalId(userExternalId)
+                                .organizationExternalId(organizationExternalId)
                                 .role(userRole)
-                                .permissions(permissionDTOS)
+                                .permissions(principalPermissions)
                                 .build();
 
                         UsernamePasswordAuthenticationToken auth =

@@ -1,6 +1,5 @@
 package com.conductor.core.security;
 
-import com.conductor.core.dto.permission.PermissionDTO;
 import com.conductor.core.model.Option;
 import com.conductor.core.model.user.User;
 import com.conductor.core.model.user.UserRole;
@@ -37,24 +36,21 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(User user) {
+    public String generateAccessToken(UserPrincipal user) {
         try {
 
-            String permissionsJson = objectMapper.writeValueAsString(PermissionMapper.toPermissionDTOs(user.getPermissions()));
+            String permissionsJson = objectMapper.writeValueAsString(user.getPermissions());
 
             return Jwts.builder()
                     .subject(user.getUsername())
-                    .claim("user_id", user.getExternalId())
+                    .claim("user_id", user.getUserExternalId())
                     .claim("permissions", permissionsJson)
                     .claim("user_role", user.getRole().getName())
-                    //.claim("organization_id", user.getOrganization().getExternalId())
+                    .claim("organization_id", user.getOrganizationExternalId())
                     .issuedAt(new Date())
                     .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1 hour
                     .signWith(getSecretKey())
                     .compact();
-        } catch (JsonProcessingException e) {
-            log.error("Error serializing permissions: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to serialize permissions", e);
         } catch (Exception e) {
             log.error("Error generating JWT token: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to generate JWT token", e);
@@ -62,7 +58,7 @@ public class JwtUtil {
     }
 
 
-    public String getExternalId(String token) {
+    public String getUserExternalId(String token) {
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(getSecretKey())
@@ -76,7 +72,7 @@ public class JwtUtil {
         }
     }
 
-    public List<PermissionDTO> getPermissions(String token) {
+    public List<PrincipalPermission> getPermissions(String token) {
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(getSecretKey())
@@ -90,7 +86,7 @@ public class JwtUtil {
             }
             return objectMapper.readValue(
                     permissionsJson,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, PermissionDTO.class)
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, PrincipalPermission.class)
             );
         } catch (Exception e) {
             log.error("Error extracting permissions from JWT: {}", e.getMessage(), e);
@@ -119,6 +115,20 @@ public class JwtUtil {
                     .parseSignedClaims(token)
                     .getPayload();
             return Option.fromName(UserRole.class, claims.get("user_role", String.class)).get();
+        } catch (Exception e) {
+            log.error("Error extracting externalId from JWT: {}", e.getMessage(), e);
+            throw new RuntimeException("Error extracting externalId", e);
+        }
+    }
+
+    public String getOrganizationExternalId(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.get("organization_id", String.class);
         } catch (Exception e) {
             log.error("Error extracting externalId from JWT: {}", e.getMessage(), e);
             throw new RuntimeException("Error extracting externalId", e);

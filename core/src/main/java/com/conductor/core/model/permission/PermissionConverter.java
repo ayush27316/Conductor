@@ -5,10 +5,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Converter
 public class PermissionConverter implements AttributeConverter<Map<Privilege,AccessLevel>, String> {
 

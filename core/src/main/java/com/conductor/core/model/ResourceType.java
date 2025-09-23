@@ -1,5 +1,7 @@
     package com.conductor.core.model;
 
+    import java.util.stream.Stream;
+
     /**
      * Defines all the resources in the system.
      */
@@ -23,6 +25,13 @@
         @Override
         public String getName() {
             return this.name;
+        }
+
+        /**
+         * Returns a stream of all ResourceType values.
+         */
+        public static Stream<ResourceType> stream() {
+            return Stream.of(values());
         }
 
     }

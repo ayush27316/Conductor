@@ -39,13 +39,19 @@ public class EventRegistrationAndModificationController {
 
         UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
 
-        FiberPermissionEvaluatorChain.create(permissionEvaluator)
-                .addRole(UserRole.OPERATOR)
-                .addPermission(
-                        principal.getOrganizationExternalId(),
-                        ResourceType.ORGANIZATION,
-                        Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE) )
-                .evaluate(auth);
+        permissionEvaluator.hasPermission(
+                auth,
+                principal.getOrganizationExternalId(),
+                ResourceType.ORGANIZATION,
+                Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE));
+
+//        FiberPermissionEvaluatorChain.create(permissionEvaluator)
+//                .addRole(UserRole.OPERATOR)
+//                .addPermission(
+//                        principal.getOrganizationExternalId(),
+//                        ResourceType.ORGANIZATION,
+//                        Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE) )
+//                .evaluate(auth);
 
         String applicationId = eventService.registerEvent(principal.getOrganizationExternalId(),request);
 

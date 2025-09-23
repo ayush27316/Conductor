@@ -95,4 +95,12 @@ public class Utils {
             }
         }
     }
+
+    public static void throwIfFalse(RuntimeException e, boolean condition)
+    {
+        if(!condition) {
+            throw e;
+        }
+    }
+
 }

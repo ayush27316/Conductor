@@ -7,6 +7,7 @@ import com.conductor.core.model.Resource;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.ticket.Ticket;
 import com.conductor.core.repository.*;
+import com.conductor.core.security.UserPrincipal;
 import com.conductor.core.util.ApplicationMapper;
 import com.conductor.core.util.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -86,7 +87,7 @@ public class EventApplicationService {
      */
     @Transactional
     public String apply(
-            User user,
+            UserPrincipal user,
             String eventExternalId,
             String formResponse) {
 
@@ -94,6 +95,7 @@ public class EventApplicationService {
                 .orElseThrow(
                         () -> new EventNotFoundException()
                 );
+        User submittedBy = userRepository.findByExternalId(user.getUserExternalId()).get();
 
         if(!event.requiresApplication()) {
             throw new ApplicationRequestFailedException("This event does not accept applications");
@@ -110,7 +112,7 @@ public class EventApplicationService {
         // TODO: check if the  current user has paid for this event
 
         Application application = applicationManager.registerApplication(
-                user,
+                submittedBy,
                 event,
                 formResponse
                 );
@@ -122,7 +124,7 @@ public class EventApplicationService {
         //the user submitted this applcation
         Permission permission =Permission.builder()
                 .resource(application)
-                .grantedTo(user)
+                .grantedTo(submittedBy)
                 .build();
         permissionRepository.save(permission);
 
@@ -161,10 +163,12 @@ public class EventApplicationService {
      */
     @Transactional
     public void approveEventApplication(
-            User approvedBy,
+            UserPrincipal user,
             String applicationExternalId) {
 
         Application application = applicationManager.findApplication(applicationExternalId);
+        User approvedBy = userRepository.findByExternalId(user.getUserExternalId()).get();
+
         if(!application.getTargetResource().getResourceType().equals(ResourceType.EVENT)){
             throw new ApplicationNotFound();
         }
@@ -204,9 +208,10 @@ public class EventApplicationService {
      * @throws ApplicationRequestFailedException        for all other exceptions cause due to database operations failure.
      */
     @Transactional
-    public void cancelEventApplication(String applicationExternalId, User cancelledBy)
+    public void cancelEventApplication(UserPrincipal user, String applicationExternalId)
     {
-      applicationManager.cancelEventApplication(applicationExternalId,cancelledBy);
+        User cancelledBy = userRepository.findByExternalId(user.getUserExternalId()).get();
+        applicationManager.cancelEventApplication(applicationExternalId,cancelledBy);
     }
 
     /**
@@ -220,12 +225,13 @@ public class EventApplicationService {
      */
     @Transactional
     public void rejectEventApplication(
-            User user,
+            UserPrincipal user,
             String applicationExternalId,
             String reason)
     {
+        User rejectedBy = userRepository.findByExternalId(user.getUserExternalId()).get();
         applicationManager.rejectEventApplication(
-                user,
+                rejectedBy,
                 applicationExternalId,
                 reason);
     }
@@ -241,10 +247,11 @@ public class EventApplicationService {
      */
     @Transactional
     public void comment(
-            User user,
+            UserPrincipal user,
             String applicationExternalId,
             String comment) {
-       applicationManager.addComment(user,applicationExternalId,comment);
+        User author = userRepository.findByExternalId(user.getUserExternalId()).get();
+        applicationManager.addComment(author,applicationExternalId,comment);
     }
 
     /**
@@ -267,8 +274,9 @@ public class EventApplicationService {
     private final FileService fileService;
 
     @Transactional
-    public void storeFile(MultipartFile file, String eventApplicationExternalId, User user) {
-        User uploadedBy = userRepository.findById(user.getId()).orElseThrow(()->new RuntimeException("User not found"));
+    public void storeFile(UserPrincipal user, MultipartFile file, String eventApplicationExternalId) {
+
+        User uploadedBy = userRepository.findByExternalId(user.getUserExternalId()).get();
         Application application = applicationManager.findApplication(eventApplicationExternalId);
         fileService.storeFile(file, Optional.of(application), uploadedBy);
     }
@@ -304,6 +312,5 @@ public class EventApplicationService {
         }
         event.setApplicationClose(LocalDateTime.now());
     }
-
 
 }

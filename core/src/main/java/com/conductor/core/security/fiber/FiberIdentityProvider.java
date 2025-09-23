@@ -53,6 +53,8 @@ public class FiberIdentityProvider implements ExternalIdentityProvider {
             986a89sdf7y
             """.getBytes();
 
+    //do we need to sign it? because ultimatelt this informaiton is stored in
+    //jwt which is signed
     public static byte[] sign16Bytes(String value)
             throws NoSuchAlgorithmException, InvalidKeyException {
         Mac mac = Mac.getInstance("HmacSHA256");
