@@ -2,6 +2,7 @@ package com.conductor.core.repository;
 
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.user.User;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,7 +14,10 @@ import java.util.Optional;
 
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
-//    Optional<Permission> findByUser_Id(Long id);
+
+    Optional<Permission> findByUserAndResource_ExternalId(User user, String externalId);
+
+    //    Optional<Permission> findByUser_Id(Long id);
 
 //    /**
 //     * Find all permissions for a specific user

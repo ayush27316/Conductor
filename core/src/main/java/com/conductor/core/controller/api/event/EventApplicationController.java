@@ -86,7 +86,7 @@ public class EventApplicationController {
                 .orPermission(parent.getLeft(), ResourceType.ORGANIZATION, Map.of(OrganizationPrivilege.EVENT, AccessLevel.WRITE))
                 .orPermission(parent.getRight(), ResourceType.EVENT, Map.of(EventPrivilege.APPLICATION, AccessLevel.WRITE))
                 .evaluate(authentication);
-        //
+
         eventApplicationService.approveEventApplication(
                 (UserPrincipal)authentication.getPrincipal(),
                 applicationExternalId

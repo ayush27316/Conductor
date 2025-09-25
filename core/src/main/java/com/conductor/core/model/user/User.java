@@ -54,7 +54,11 @@ public class User extends Resource implements UserDetails {
     @JoinColumn(name = "organization_id_fk")
     private Organization organization;
 
-    @OneToMany(mappedBy = "grantedTo", fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @OneToMany(
+            mappedBy = "grantedTo",
+            fetch = FetchType.EAGER,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private List<Permission> permissions;
 
 //    @OneToMany(mappedBy = "submittedBy", fetch = FetchType.LAZY ,cascade = CascadeType.PERSIST)

@@ -140,7 +140,6 @@ public class OrganizationRegistrationController {
     @GetMapping("/applications/pending")
     public ResponseEntity<List<ApplicationDTO>> getAllPendingApplications(Authentication auth) {
 
-
         FiberPermissionEvaluatorChain.create(permissionEvaluator)
                 .orRole(UserRole.ADMIN)
                 .evaluate(auth);

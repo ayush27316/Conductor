@@ -49,19 +49,7 @@ public enum OrganizationPrivilege implements Privilege {
      * Grants access to configuration settings at the organization level,
      * such as changing organization name, description, email etc.
      **/
-    CONFIG("config"),
-
-    /**
-     * Grants access to view organization information and basic details.
-     * By default, 'PUBLIC' users are granted 'VIEW' access.
-     *
-     * [?]: For things that organizations are to be public can be placed
-     * under /public path so we may not need view entirely. It should be
-     * customizable that what user can see. For example maybe an organization
-     * want to show certain metrics like total tickets sold which is part of
-     * AUDIT privilege.
-     */
-    VIEW("view");
+    CONFIG("config");
 
     private final String name;
 

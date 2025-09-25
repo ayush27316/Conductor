@@ -1,0 +1,5 @@
+Millions of people should be able to buy tickets:-
+We can simulate a payment gateway using stripe for now.
+what we want is a have a session fixed for a user
+until is transaction finishes within thsi time tickets must be in
+a transient lock state.

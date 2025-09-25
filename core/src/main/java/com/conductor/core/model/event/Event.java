@@ -4,6 +4,9 @@ import com.conductor.core.model.Resource;
 import com.conductor.core.model.ResourceType;
 import com.conductor.core.model.form.Form;
 import com.conductor.core.model.org.Organization;
+import com.conductor.core.model.org.OrganizationPrivilege;
+import com.conductor.core.model.permission.AccessLevel;
+import com.conductor.core.model.permission.Privilege;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -74,6 +77,15 @@ public class Event extends Resource {
 
     @Column(nullable = false , length = 1000)
     private String description;
+
+    public static Map<Privilege, AccessLevel> getOwnerPermission() {
+        return Map.ofEntries(
+                Map.entry(EventPrivilege.AUDIT, AccessLevel.READ),
+                Map.entry(EventPrivilege.OPERATOR, AccessLevel.WRITE),
+                Map.entry(EventPrivilege.CONFIG, AccessLevel.WRITE),
+                Map.entry(EventPrivilege.APPLICATION, AccessLevel.WRITE)
+        );
+    }
 
 
     /******************************

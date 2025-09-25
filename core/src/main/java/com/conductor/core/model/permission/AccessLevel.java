@@ -31,5 +31,4 @@ public enum AccessLevel implements Option {
         return this.name;
     }
 
-
 }
