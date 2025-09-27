@@ -54,7 +54,7 @@ public class EventRegistrationAndModificationService {
 
         isTrue(request.getEnd().isAfter(request.getBegin()), "End time must be after begin time");
         isTrue(request.getAccessibleTo().isAfter(request.getAccessibleFrom()), "Accessible-to must be after accessible-from");
-        if (!request.isFree()) {
+        if (!request.getIsFree()) {
             notNull(request.getTicketPrice(), "Ticket price is required when event is not free");
 //            Assert.notNull(currency, "Currency is required when event is not free");
           }
@@ -113,9 +113,10 @@ public class EventRegistrationAndModificationService {
         Utils.updateIfNotNull(event::setDescription, em.getDescription());
         Utils.updateIfNotEmpty(event::setOptions, em.getOptions());
 
-        if (em.getTotalTicketsToBeSold() > 0) {
+        if (em.getTotalTicketsToBeSold() != null && em.getTotalTicketsToBeSold() > 0) {
             event.setTotalTicketsToBeSold(em.getTotalTicketsToBeSold());
         }
+
 
         updateAccessDetails(event, em);
         updatePaymentDetails(event, em);
@@ -145,14 +146,18 @@ public class EventRegistrationAndModificationService {
         EventPaymentDetails details = Optional.ofNullable(event.getPaymentDetails())
                 .orElseGet(EventPaymentDetails::new);
 
-        details.setIsfree(em.isFree());
-        if (em.isFree()) {
+        if(em.getIsFree() != null) {
+            details.setIsfree(em.getIsFree());
+        }
+
+        if (Boolean.TRUE.equals(em.getIsFree())) {
             details.setTicketPrice(null);
             details.setCurrency(null);
-        } else {
+        } else if (Boolean.FALSE.equals(em.getIsFree())) {
             Utils.updateIfNotNull(details::setTicketPrice, em.getTicketPrice());
             Utils.updateIfNotNull(details::setCurrency, em.getCurrency());
         }
+
         event.setPaymentDetails(details);
     }
 
@@ -171,9 +176,9 @@ public class EventRegistrationAndModificationService {
                         .accessibleTo(em.getAccessibleTo())
                         .build())
                 .paymentDetails(EventPaymentDetails.builder()
-                        .isfree(em.isFree())
-                        .ticketPrice(em.isFree()? null : em.getTicketPrice())
-                        .currency(em.isFree()? null : em.getCurrency())
+                        .isfree(em.getIsFree())
+                        .ticketPrice(em.getIsFree()? null : em.getTicketPrice())
+                        .currency(em.getIsFree()? null : em.getCurrency())
                         .build())
                 .description(em.getDescription())
                 .status(EventStatus.DRAFT)

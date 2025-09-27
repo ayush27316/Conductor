@@ -6,11 +6,13 @@ import com.conductor.core.exception.UserNotFoundException;
 import com.conductor.core.model.event.Event;
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.user.User;
+import com.conductor.core.model.user.UserRole;
 import com.conductor.core.repository.EventRepository;
 import com.conductor.core.repository.PermissionRepository;
 import com.conductor.core.repository.UserRepository;
 import com.conductor.core.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -51,8 +53,11 @@ public class OrganizationOperatorService {
                     .permission(Event.getOwnerPermission())
                     .build();
             permissionList.add(p);
+            user.setRole(UserRole.OPERATOR);
+            user.setOrganization(grantedByUser.getOrganization() != null
+                    ?   grantedByUser.getOrganization()
+                    :   null);
             userRepository.save(user);
-
             return;
         }
 
@@ -68,7 +73,6 @@ public class OrganizationOperatorService {
 
         targetPermission.setPermission(Event.getOwnerPermission());
         targetPermission.setGrantedBy(grantedByUser);
-
         userRepository.save(user);
     }
 }

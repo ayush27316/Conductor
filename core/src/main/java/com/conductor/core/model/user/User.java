@@ -64,7 +64,7 @@ public class User extends Resource implements UserDetails {
 //    @OneToMany(mappedBy = "submittedBy", fetch = FetchType.LAZY ,cascade = CascadeType.PERSIST)
 //    private List<Application> applications = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user",fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<Ticket> tickets = new ArrayList<>();
 
     @Override

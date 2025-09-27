@@ -2,6 +2,7 @@ package com.conductor.core.controller.api.event;
 
 import com.conductor.core.dto.event.EventModification;
 import com.conductor.core.model.ResourceType;
+import com.conductor.core.model.event.EventPrivilege;
 import com.conductor.core.model.org.OrganizationPrivilege;
 import com.conductor.core.model.permission.AccessLevel;
 import com.conductor.core.model.user.UserRole;
@@ -62,9 +63,8 @@ public class EventRegistrationAndModificationController {
     public ResponseEntity<?> modifyEvent(
             @PathVariable("event-id")
             @NotBlank(message = "Event Id is required")
-            @Size(min = 36, max = 36)
             String eventExternalId,
-            @Valid @RequestBody EventModification request,
+            @RequestBody EventModification request,
             Authentication auth)
     {
         UserPrincipal principal = (UserPrincipal) auth.getPrincipal();
@@ -77,7 +77,7 @@ public class EventRegistrationAndModificationController {
                 .orPermission(
                         eventExternalId,
                         ResourceType.EVENT,
-                        Map.of(OrganizationPrivilege.CONFIG, AccessLevel.WRITE) );
+                        Map.of(EventPrivilege.CONFIG, AccessLevel.WRITE) );
 
         FiberPermissionEvaluatorChain.create(permissionEvaluator)
                 .addRole(UserRole.OPERATOR)

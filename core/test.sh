@@ -265,34 +265,36 @@ echo "Registration ID: $application_id"
 
 
 
-curl -s -w "\n%{http_code}" --request POST \
-  --url "http://localhost:8082/api/events/register" \
-  --header "authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ4SGFja3MiLCJ1c2VyX2V4dGVybmFsX2lkIjoiLTExMzgzMjY5MzMxMTE0MDcyNyIsInBlcm1pc3Npb25zIjoiW3tcInBlcm1pc3Npb25zXCI6e30sXCJyZXNvdXJjZV9uYW1lXCI6XCJvcmdhbml6YXRpb25cIixcInJlc291cmNlX2lkXCI6XCI4NTQ1NDkyOTY4MTg4Mzg5OTMzXCIsXCJncmFudGVkX2F0XCI6bnVsbCxcImdyYW50ZWRfYnlfdXNlcl9pZFwiOm51bGwsXCJleHBpcmVzX2F0XCI6bnVsbH1dIiwidXNlcl9yb2xlIjoiT1BFUkFUT1IiLCJpYXQiOjE3NTgxNjAyNTgsImV4cCI6MTc1ODE2Mzg1OH0.u0jA9vSiPGnJFgfbBip_LhbFmHQJob09yOFDuXurhpJkD2lOxMRlvSDGQT0hLKNI_WQJ4WR0tgMAgPAK5FQGFw" \
-  --header 'content-type: application/json' \
-  --data '{
-  "name": "Tech  24 2025",
-  "organization_id": "f3bd4cb7-68a2-4189-bffa-5d24eff4951c",
-  "location": "Montreal, Canada",
-  "begin_time": "2026-09-01T09:00:00Z",
-  "end_time": "2026-09-01T17:00:00Z",
-  "access_strategy": "once",
-  "format": "online",
-  "is_free": true,
-  "options": [
-    "requires_payment",
-    "requires_approval"
-  ],
-  "accessible_from": "2025-08-01T00:00:00",
-  "accessible_to": "2025-08-25T23:59:59",
-  "total_tickets_to_be_sold": 100,
-  "description": "tech event"
-}'
 
 
+#grant permissison to user
+#
+#curl -s -w "\n%{http_code}" --request PUT \
+#  --url "http://localhost:8082/api/v1/organizations/register/manager" \
+#  --header "authorization: Bearer $org_jwt" \
+#  --header 'content-type: application/json' \
+#  --data '{
+#  "event-id": "$event_id",
+#  "user-id": "$user_id"
+#}'
+#
+#
+#curl -s -w "\n%{http_code}" --request POST \
+#  --url "http://localhost:8082/auth/login" \
+#  --header 'content-type: application/json' \
+#  --data '{
+#  "username": "ayush",
+#  "password": "123"
+#}'
+#
+#
+#/{event-id}/modify
+#
+#curl -s -w "\n%{http_code}" --request POST \
+#  --url "http://localhost:8082/api/v1/events/935225981937173195.-7106820603409930071.bc21d9d092636678a7550bc9b37229ca/modify" \
+#  --header "authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkIjoiMjQxNTYyNDE0MzE5Mzc0ODQwOSIsInBlcm1pc3Npb25zIjoiW10iLCJ1c2VyX3JvbGUiOiJVU0VSIiwiaWF0IjoxNzU4OTkwMjA2LCJleHAiOjE3NTg5OTM4MDZ9.hvNQdR-sRLRjz_e5v_H99VmTgacB5YgwuCO-SxEaAMmEba-qWmt1UExaOLaZ_b3vUpO8a4QFofYgGeBttSsRWA" \
+#  --header 'content-type: application/json' \
+#  --data '{
+#  "name": "ctb hacks"
+#}'
 
-#curl -X POST "http://localhost:8082/api/v1/events/935225981937173195.-7106820603409930071.bc21d9d092636678a7550bc9b37229ca/modify" \
-#  -H "Content-Type: application/json" \
-#  -H "Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJ1c2VyX2lkIjoiMTEyNzYzMTQ1MDAwNTQ5NzE3NyIsInBlcm1pc3Npb25zIjoiW3tcInBlcm1pc3Npb25zXCI6e30sXCJyZXNvdXJjZV90eXBlXCI6XCJPUkdBTklaQVRJT05cIixcInJlc291cmNlX2lkXCI6XCI5MzUyMjU5ODE5MzcxNzMxOTVcIixcImdyYW50ZWRfYXRcIjpudWxsLFwiZ3JhbnRlZF9ieV91c2VyX2lkXCI6bnVsbCxcImV4cGlyZXNfYXRcIjpudWxsfV0iLCJ1c2VyX3JvbGUiOiJPUEVSQVRPUiIsIm9yZ2FuaXphdGlvbl9pZCI6IjkzNTIyNTk4MTkzNzE3MzE5NSIsImlhdCI6MTc1ODU2Mzg1MCwiZXhwIjoxNzU4NTY3NDUwfQ.hk_rgXx7xvdUe6zK6JqsqR_KIWeDkzHRmvC98bjotjkDvJnUtJhKKSEzLEjqautC6-WNGLceY1CZrbQj--YhMw" \
-#  -d '{
-#    "description": "A premier AI event bringing together researchers and industry experts."
-#  }'

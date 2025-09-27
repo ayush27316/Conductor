@@ -27,7 +27,8 @@ public enum ApplicationStatus implements Option {
     /**
      * Application was cancelled by the user.
      */
-    CANCELLED("cancelled");
+    CANCELLED("cancelled"),
+    DRAFT("draft");
 
     private final String name;
 

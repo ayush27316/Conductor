@@ -10,6 +10,7 @@ import com.conductor.core.security.fiber.FiberIdentityProvider;
 import com.conductor.core.security.fiber.FiberPermissionEvaluatorChain;
 import com.conductor.core.service.OrganizationOperatorService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -23,8 +24,9 @@ import org.springframework.web.service.annotation.PutExchange;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/organizations/operators")
+@RequestMapping("/api/v1/organizations")
 @Validated
+@Slf4j
 @RequiredArgsConstructor
 public class OrganizationOperatorController {
     private final OrganizationOperatorService operatorService;
@@ -32,7 +34,7 @@ public class OrganizationOperatorController {
     private final FiberIdentityProvider fiberIdentityProvider;
 
 
-    @PutMapping("/register/events/manager")
+    @PutMapping("/register/manager")
     ResponseEntity<?> registerManager(
             @RequestBody
             RegisterEventManagerRequest request,

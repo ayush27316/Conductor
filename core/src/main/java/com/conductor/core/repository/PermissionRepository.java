@@ -2,20 +2,15 @@ package com.conductor.core.repository;
 
 import com.conductor.core.model.permission.Permission;
 import com.conductor.core.model.user.User;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
 
-    Optional<Permission> findByUserAndResource_ExternalId(User user, String externalId);
+    Optional<Permission> findByGrantedToAndResource_ExternalId(User grantedTo, String externalId);
 
     //    Optional<Permission> findByUser_Id(Long id);
 
