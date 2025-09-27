@@ -8,7 +8,7 @@ It enables **event creation, ticketing, registration workflows, and ticket appli
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Multi-tenant Architecture**: Supports multiple organizations with isolated event workflows.
 - **Row-level Security (RLS)**: Ensures per-organization data access and compliance.
@@ -19,33 +19,29 @@ It enables **event creation, ticketing, registration workflows, and ticket appli
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 - **Backend**: Java 21, Spring Boot 3
-- **Database**: MySQL
+- **Database**: h2 (temporary for development purpose only)
 - **Security**: Spring Security, JWT
 - **Build Tool**: Maven
 ---
 
-## 📖 API Documentation
+##  API Documentation
 
 The full REST API documentation is available here:
 👉 [Conductor API Docs](https://bump.sh/conductor/doc/conductor-api/)
 
 ---
-
-## ⚡ Getting Started
-
-### Prerequisites
-- Java 21+
-- MySQL
-
-### Setup
+## Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/ayush27316/Conductor.git
 cd Conductor
+
+#install dependencies
+mvn clean install
 
 # Build and Run the project
 cd core
