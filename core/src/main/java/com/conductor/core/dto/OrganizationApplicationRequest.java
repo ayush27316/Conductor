@@ -20,14 +20,6 @@ public class OrganizationApplicationRequest {
     @Size(max = 500, message = "Description must be at most 500 characters.")
     private String description;
 
-    @Schema(description =
-            """ 
-                Organization's contact email. This email is used for all
-                communication with the organization. After organization
-                is approved credentials of a user with owner privilege is 
-                sent on this email
-            """,
-            example = "contact@conductor.io")
     @NotBlank(message = "Organization email is required.")
     @Email(message = "Invalid email format.")
     @Size(max = 200, message = "Website URL must be at most 200 characters.")
@@ -42,13 +34,6 @@ public class OrganizationApplicationRequest {
             example = "[\"AI\",\"Orchestration\",\"Cloud\"]")
     private List<String> tags;
 
-    @Schema(description =
-            """
-                A website, social media profile link of the organization,
-                that might be useful in identifying the organization during
-                the approval process.
-            """,
-                example = "https://www.conductor.io")
     @JsonProperty("website_url")
     @Size(max = 200, message = "Website URL must be at most 200 characters.")
     private String websiteUrl;

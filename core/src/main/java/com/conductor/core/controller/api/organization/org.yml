@@ -1,0 +1,1099 @@
+openapi: 3.0.3
+info:
+  title: Conductor  API
+  description: |
+    A REST API with multi-tenant architecture and row-level security, supporting
+    isolated event workflows for multiple organizations. Implemented ticketing, 
+    registration, ticket application workflow, enabling secure, scalable event hosting.
+  version: 1.0.0
+  contact:
+    name: Conductor API Support
+    email: support@conductor.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      summary: User login
+      description: Authenticates a user and returns a JWT access token.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT token
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: string
+                    example: "3600000"
+        '401':
+          description: Invalid username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/signup:
+    post:
+      summary: User signup
+      description: Registers a new user account.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: User created successfully
+        '409':
+          description: Username already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /organizations/apply:
+    post:
+      summary: Submit organization application
+      description: |
+        Submit a new organization registration application. This endpoint creates
+        a new application and grants the submitting user permission to access it.
+        
+        **Required Permissions:** Authenticated user (any role)
+        
+        **Business Rules:**
+        - Organization name must be unique
+        - Email format must be valid
+        - All required fields must be provided
+      operationId: submitOrganizationApplication
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationApplicationRequest'
+            examples:
+              complete_application:
+                summary: Complete application example
+                value:
+                  name: "TechCorp Solutions"
+                  description: "Leading AI and cloud orchestration company"
+                  email: "contact@techcorp.com"
+                  tags: ["AI", "Orchestration", "Cloud"]
+                  website_url: "https://www.techcorp.com"
+                  locations: "San Francisco, CA"
+              minimal_application:
+                summary: Minimal required fields
+                value:
+                  name: "StartupCo"
+                  email: "hello@startupco.com"
+                  locations: "New York, NY"
+      responses:
+        '200':
+          description: Application submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application_id:
+                    type: string
+                    format: uuid
+                    description: External ID of the created application
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                required:
+                  - application_id
+              examples:
+                success_response:
+                  summary: Successful application submission
+                  value:
+                    application_id: "123e4567-e89b-12d3-a456-426614174000"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/OrganizationNameConflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      tags:
+        - Organization Applications
+
+  /organizations/applications/{application-id}/approve:
+    put:
+      summary: Approve organization application
+      description: |
+        Approve a pending organization application and initiate the onboarding process.
+        This creates the organization, sets up permissions, and creates default operator credentials.
+        
+        **Required Permissions:** 
+        - Role: ADMIN
+        
+        **Business Rules:**
+        - Application must be in PENDING status
+        - Only administrators can approve applications
+        - Approval triggers automatic onboarding process
+      operationId: approveOrganizationApplication
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: application-id
+          in: path
+          required: true
+          description: External ID of the application to approve
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Application approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Application approved successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ApplicationNotFound'
+        '409':
+          $ref: '#/components/responses/ApplicationAlreadyProcessed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      tags:
+        - Organization Applications
+
+  /organizations/applications/{application-id}/reject:
+    put:
+      summary: Reject organization application
+      description: |
+        Reject a pending organization application with a specified reason.
+        The rejection reason is added as a comment to the application.
+        
+        **Required Permissions:** 
+        - Role: ADMIN
+        
+        **Business Rules:**
+        - Application must be in PENDING status
+        - Rejection reason is required and must be provided
+        - Reason must not exceed 200 characters
+      operationId: rejectOrganizationApplication
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: application-id
+          in: path
+          required: true
+          description: External ID of the application to reject
+          schema:
+            type: string
+            minLength: 36
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            example: "123e4567-e89b-12d3-a456-426614174000"
+        - name: reason
+          in: query
+          required: true
+          description: Reason for rejecting the application
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+            example: "Incomplete documentation provided"
+      responses:
+        '200':
+          description: Application rejected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Application rejected successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ApplicationNotFound'
+        '409':
+          $ref: '#/components/responses/ApplicationAlreadyProcessed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      tags:
+        - Organization Applications
+
+  /organizations/applications/{application-id}:
+    delete:
+      summary: Cancel organization application
+      description: |
+        Cancel a pending organization application. This sets the application 
+        status to CANCELLED and can typically only be performed by the user 
+        who submitted the application.
+        
+        **Required Permissions:** 
+        - Resource permission: ACCESS on the specific application
+        
+        **Business Rules:**
+        - Application must be in PENDING status
+        - Only the submitter or users with application access can cancel
+        - Cancellation is permanent and cannot be undone
+      operationId: cancelOrganizationApplication
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: application-id
+          in: path
+          required: true
+          description: External ID of the application to cancel
+          schema:
+            type: string
+            minLength: 36
+            maxLength: 36
+            pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Application cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Application cancelled successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ApplicationNotFound'
+        '409':
+          $ref: '#/components/responses/ApplicationAlreadyProcessed'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      tags:
+        - Organization Applications
+
+  /organizations/applications/pending:
+    get:
+      summary: Get all pending organization applications
+      description: |
+        Retrieve all organization applications that are waiting for approval.
+        Returns applications with PENDING status.
+        
+        **Required Permissions:** 
+        - Role: ADMIN (or equivalent administrative role)
+        
+        **Business Rules:**
+        - Only administrators can view all pending applications
+        - Returns applications in PENDING status only
+        - Includes application details and metadata
+      operationId: getAllPendingApplications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of pending applications retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApplicationDTO'
+              examples:
+                pending_applications:
+                  summary: List of pending applications
+                  value:
+                    - id: "123e4567-e89b-12d3-a456-426614174000"
+                      submitted_at: "2024-01-15T10:30:00Z"
+                      application_status: "pending"
+                      application_form_response: "{\"name\":\"TechCorp\",\"email\":\"contact@techcorp.com\"}"
+                    - id: "456e7890-e12b-34c5-d678-901234567890"
+                      submitted_at: "2024-01-16T14:22:00Z"
+                      application_status: "pending"
+                      application_form_response: "{\"name\":\"StartupCo\",\"email\":\"hello@startupco.com\"}"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      tags:
+        - Organization Applications
+
+  /organizations/{organization-id}/modify:
+    post:
+      tags:
+        - Organization Management
+      summary: Modify organization details
+      description: |
+        Updates organization information including description, email, website URL, and tags.
+        Only non-null fields in the request will be updated.
+      operationId: modifyOrganization
+
+      parameters:
+        - name: organization-id
+          in: path
+          required: true
+          description: External ID of the organization to modify
+          schema:
+            type: string
+            maxLength: 100
+            minLength: 1
+          example: "org-12345"
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationModificationRequest'
+            examples:
+              update_all:
+                summary: Update all fields
+                value:
+                  description: "Updated organization description"
+                  email: "contact@example.com"
+                  website-url: "https://www.example.com"
+                  tags: ["technology", "startup", "ai"]
+              partial_update:
+                summary: Partial update
+                value:
+                  description: "New description only"
+
+      responses:
+        '200':
+          description: Organization modified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+        '400':
+          description: Bad Request - Validation errors or constraint violations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation failed
+                  value:
+                    error: "Bad Request"
+                    success: false
+                    message: "Validation failed"
+                    timestamp: "2025-01-15T10:30:00Z"
+                    details:
+                      validation_errors:
+                        organization-id: "Organization Id is required"
+                constraint_violation:
+                  summary: Constraint violation
+                  value:
+                    error: "Bad Request"
+                    success: false
+                    message: "Constraint violation: Organization Id is required"
+                    timestamp: "2025-01-15T10:30:00Z"
+
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                token_invalid:
+                  summary: Invalid token
+                  value:
+                    error: "401 UNAUTHORIZED"
+                    success: false
+                    message: "Token not valid: Token has expired"
+                    timestamp: "2025-01-15T10:30:00Z"
+                unauthorized_access:
+                  summary: Unauthorized access
+                  value:
+                    error: "401 UNAUTHORIZED"
+                    success: false
+                    message: "Access Denied"
+                    timestamp: "2025-01-15T10:30:00Z"
+
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Forbidden"
+                success: false
+                message: "Insufficient permissions to modify this organization"
+                timestamp: "2025-01-15T10:30:00Z"
+
+        '404':
+          description: Not Found - Organization not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "404 NOT_FOUND"
+                success: false
+                message: "Organization not found"
+                timestamp: "2025-01-15T10:30:00Z"
+
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Internal Server Error"
+                success: false
+                message: "An unexpected error occurred. Please try again later."
+                timestamp: "2025-01-15T10:30:00Z"
+
+      security:
+        - BearerAuth: []
+
+      x-permissions:
+        description: "Required permissions to access this endpoint"
+        required_roles:
+          - "OPERATOR"
+        required_permissions:
+          - resource_type: "ORGANIZATION"
+            resource_id: "{organization-id}"
+            permission: "OWNER"
+            access_level: "WRITE"
+
+  /organizations/operators/register/events/manager:
+    put:
+      tags:
+        - Organization Operators
+      summary: Register an event manager
+      description: |
+        Registers a user as a manager for a specific event. The user will be granted
+        owner permissions for the event. If the user already has some permissions for
+        the event, they will be promoted to owner level.
+      operationId: registerEventManager
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterEventManagerRequest'
+            example:
+              event-id: "event-67890"
+              user-id: "user-12345"
+
+      responses:
+        '200':
+          description: Event manager registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+        '400':
+          description: Bad Request - Validation errors, malformed JSON, or invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation failed
+                  value:
+                    error: "Bad Request"
+                    success: false
+                    message: "Validation failed"
+                    timestamp: "2025-01-15T10:30:00Z"
+                    details:
+                      validation_errors:
+                        event-id: "Event id is required"
+                        user-id: "User id is required"
+                malformed_json:
+                  summary: Malformed JSON
+                  value:
+                    error: "Bad Request"
+                    success: false
+                    message: "Malformed JSON request"
+                    timestamp: "2025-01-15T10:30:00Z"
+                    details:
+                      cause: "Unexpected character at position 15"
+                invalid_data:
+                  summary: Invalid request data
+                  value:
+                    error: "400 BAD_REQUEST"
+                    success: false
+                    message: "Invalid request data"
+                    timestamp: "2025-01-15T10:30:00Z"
+
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                token_invalid:
+                  summary: Invalid token
+                  value:
+                    error: "401 UNAUTHORIZED"
+                    success: false
+                    message: "Token not valid: Token has expired"
+                    timestamp: "2025-01-15T10:30:00Z"
+                access_denied:
+                  summary: Access denied
+                  value:
+                    error: "401 UNAUTHORIZED"
+                    success: false
+                    message: "Access Denied"
+                    timestamp: "2025-01-15T10:30:00Z"
+
+        '403':
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Forbidden"
+                success: false
+                message: "Insufficient permissions to register event managers"
+                timestamp: "2025-01-15T10:30:00Z"
+
+        '404':
+          description: Not Found - Event or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                event_not_found:
+                  summary: Event not found
+                  value:
+                    error: "Not Found"
+                    success: false
+                    message: "The requested event could not be found"
+                    timestamp: "2025-01-15T10:30:00Z"
+                user_not_found:
+                  summary: User not found
+                  value:
+                    error: "Not Found"
+                    success: false
+                    message: "The requested user could not be found"
+                    timestamp: "2025-01-15T10:30:00Z"
+
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Internal Server Error"
+                success: false
+                message: "An unexpected error occurred. Please try again later."
+                timestamp: "2025-01-15T10:30:00Z"
+
+      security:
+        - BearerAuth: []
+
+      x-permissions:
+        description: "Required permissions to access this endpoint"
+        required_roles:
+          - "OPERATOR"
+        alternative_permissions:
+          - resource_type: "ORGANIZATION"
+            resource_id: "{organization-id-from-event}"
+            permission: "OPERATOR"
+            access_level: "WRITE"
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          maxLength: 50
+          description: Username of the user
+        password:
+          type: string
+          maxLength: 100
+          description: Password of the user
+
+    SignupRequest:
+      type: object
+      required:
+        - username
+        - password
+        - email
+        - first_name
+        - last_name
+      properties:
+        username:
+          type: string
+          maxLength: 50
+        password:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        first_name:
+          type: string
+          maxLength: 50
+        last_name:
+          type: string
+          maxLength: 50
+
+    OrganizationApplicationRequest:
+      type: object
+      required:
+        - name
+        - email
+        - locations
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Name of the organization
+          example: "TechCorp Solutions"
+        description:
+          type: string
+          maxLength: 500
+          description: Brief description of the organization
+          example: "Leading AI and cloud orchestration company providing innovative solutions"
+        email:
+          type: string
+          format: email
+          maxLength: 200
+          description: Primary contact email for the organization
+          example: "contact@techcorp.com"
+        tags:
+          type: array
+          items:
+            type: string
+          description: |
+            Tags related to the organization. If approved, these tags are shown 
+            on the organization's public profile. Can be added later as well.
+          example: ["AI", "Orchestration", "Cloud"]
+        website_url:
+          type: string
+          maxLength: 200
+          format: uri
+          description: Organization's website URL
+          example: "https://www.techcorp.com"
+        locations:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Primary location(s) of the organization
+          example: "San Francisco, CA"
+
+    ApplicationDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: External ID of the application
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        submitted_at:
+          type: string
+          format: date-time
+          description: Timestamp when the application was submitted
+          example: "2024-01-15T10:30:00Z"
+        application_status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        processed_by_user_id:
+          type: string
+          format: uuid
+          description: External ID of the user who processed the application
+          example: "456e7890-e12b-34c5-d678-901234567890"
+          nullable: true
+        processed_at:
+          type: string
+          format: date-time
+          description: Timestamp when the application was processed
+          example: "2024-01-16T15:45:00Z"
+          nullable: true
+        application_form_response:
+          type: string
+          description: JSON string containing the original application form data
+          example: "{\"name\":\"TechCorp\",\"email\":\"contact@techcorp.com\",\"description\":\"AI company\"}"
+
+    ApplicationStatus:
+      type: string
+      enum:
+        - pending
+        - approved
+        - rejected
+        - cancelled
+      description: |
+        Application status indicating the lifecycle state:
+        - `pending`: Submitted but not yet reviewed
+        - `approved`: Application has been approved by an administrator
+        - `rejected`: Application has been rejected
+        - `cancelled`: Application was cancelled by the user
+      example: "pending"
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error type or category
+          example: "Bad Request"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request parameter: name is required"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the error occurred
+          example: "2024-01-15T10:30:00Z"
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          example: false
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
+          example:
+            validation_errors:
+              name: "Organization name is required"
+              email: "Invalid email format"
+OrganizationModificationRequest:
+  type: object
+  description: Request object for modifying organization details
+  properties:
+    description:
+      type: string
+      description: Organization description
+      example: "A technology company focused on AI solutions"
+      maxLength: 1000
+    email:
+      type: string
+      format: email
+      description: Organization contact email
+      example: "contact@example.com"
+      maxLength: 255
+    website-url:
+      type: string
+      format: uri
+      description: Organization website URL
+      example: "https://www.example.com"
+      maxLength: 500
+    tags:
+      type: array
+      description: List of tags associated with the organization
+      items:
+        type: string
+        maxLength: 50
+      example: ["technology", "startup", "ai"]
+      maxItems: 20
+  additionalProperties: false
+
+  RegisterEventManagerRequest:
+    type: object
+    required:
+      - event-id
+      - user-id
+    description: Request object for registering an event manager
+    properties:
+      event-id:
+        type: string
+        description: External ID of the event
+        example: "event-67890"
+        minLength: 1
+        maxLength: 100
+      user-id:
+        type: string
+        description: External ID of the user to be registered as manager
+        example: "user-12345"
+        minLength: 1
+        maxLength: 100
+    additionalProperties: false
+
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            invalid_parameter:
+              summary: Invalid parameter
+              value:
+                error: "Bad Request"
+                message: "Invalid request parameter: application-id is required"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+            constraint_violation:
+              summary: Constraint violation
+              value:
+                error: "Bad Request"
+                message: "Constraint violation: Rejection reason cannot be blank"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+
+    ValidationError:
+      description: Validation error - Request body validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            validation_failed:
+              summary: Validation errors
+              value:
+                error: "Bad Request"
+                message: "Validation failed"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+                details:
+                  validation_errors:
+                    name: "Organization name is required"
+                    email: "Invalid email format"
+                    locations: "Organization location is required"
+
+    Unauthorized:
+      description: Unauthorized - Authentication required or token invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            token_invalid:
+              summary: Invalid token
+              value:
+                error: "Unauthorized"
+                message: "Token not valid: JWT token has expired"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+            missing_auth:
+              summary: Missing authentication
+              value:
+                error: "Unauthorized"
+                message: "Authentication required"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            insufficient_permissions:
+              summary: Access denied
+              value:
+                error: "Forbidden"
+                message: "Access Denied: ADMIN role required"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+            resource_access_denied:
+              summary: Resource access denied
+              value:
+                error: "Forbidden"
+                message: "Access Denied: No permission to access this application"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+
+    ApplicationNotFound:
+      description: Application not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            not_found:
+              summary: Application not found
+              value:
+                error: "Not Found"
+                message: "The requested application could not be found"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+
+    OrganizationNameConflict:
+      description: Organization name already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            name_taken:
+              summary: Organization name conflict
+              value:
+                error: "Conflict"
+                message: "Organization name already taken"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+
+    ApplicationAlreadyProcessed:
+      description: Application is already in a final state
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            already_processed:
+              summary: Application already processed
+              value:
+                error: "Conflict"
+                message: "Application has already been processed and cannot be modified"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            generic_error:
+              summary: Generic server error
+              value:
+                error: "Internal Server Error"
+                message: "An unexpected error occurred. Please try again later."
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+            database_error:
+              summary: Database operation failed
+              value:
+                error: "Internal Server Error"
+                message: "Database operation failed"
+                timestamp: "2024-01-15T10:30:00Z"
+                success: false
+
+  # Common error responses that can occur across multiple endpoints
+  parameters:
+    ApplicationId:
+      name: application-id
+      in: path
+      required: true
+      description: External ID of the application
+      schema:
+        type: string
+        format: uuid
+        example: "123e4567-e89b-12d3-a456-426614174000"
+
+tags:
+  - name: Authentication
+    description: |
+      Endpoints for user authentication and account management.
+
+      **Authentication Flow:**
+      1. Register a new account using `/auth/signup`
+      2. Login with `/auth/login` to receive a JWT token
+      3. Include the JWT token in the Authorization header for all subsequent requests
+
+      **Token Usage:**
+      ```
+      Authorization: Bearer your_jwt_token_here
+      ```
+  - name: Organization Applications
+    description: |
+      Endpoints for managing organization registration applications.
+      
+      **Permission Model:**
+      - **Apply**: Any authenticated user can submit applications
+      - **Approve/Reject**: Requires ADMIN role
+      - **Cancel**: Requires resource-level permission on the application
+      - **View Pending**: Requires ADMIN role
+      
+      **Application Lifecycle:**
+      1. User submits application → PENDING
+      2. Admin approves → APPROVED (triggers onboarding)
+      3. Admin rejects → REJECTED (with reason)
+      4. User cancels → CANCELLED
+      
+      **Onboarding Process (triggered on approval):**
+      - Organization entity created
+      - Audit record initialized  
+      - Default operator user created with generated credentials
+      - Owner permissions assigned
+      - Email with credentials sent (async)
+
+# Additional documentation sections
+externalDocs:
+  description: Find more information about the Organization Registration API
+  url: https://docs.conductor.com/api/organization-registration

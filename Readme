@@ -1,26 +1,54 @@
-Conductor
+# Conductor – Event Management System
 
-create events and distribute tickets
-conductor follows hexagonal architecture where it exposes
-interfaces for external services like payments.
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.0-green.svg)](https://spring.io/projects/spring-boot)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-conductor is built on a reactive core. if a ticket generation is
-requested it forwards the payment request to payment service asynchronously
-meanwhile payment request is getting completed conductor can serve other requests
-like event details/metrics.
+Conductor is a **multi-tenant event management system** built with **Spring Boot**, designed to support **scalable, secure, and isolated event workflows** for multiple organizations.
+It enables **event creation, ticketing, registration workflows, and ticket application handling** with fine-grained **row-level security (RLS)**, ensuring data separation between tenants.
 
-Core:
-Main domain model and logic
+---
 
-Ports:
-Exposes interfaces that can be implemented to support additional services
-like logging, notifications etc
+## 🚀 Features
 
-Adapters:
-implmentaions of ports. Adpaters adds Ports as dependencies with a scope "provided"
-(provided by the core)
+- **Multi-tenant Architecture**: Supports multiple organizations with isolated event workflows.
+- **Row-level Security (RLS)**: Ensures per-organization data access and compliance.
+- **Ticketing & Registration**: Create, register, and manage event tickets.
+- **Application Workflow**: Ticket application flow with secure approvals.
+- **Scalability**: Optimized to handle thousands of concurrent registrations with minimal latency.
+- **RESTful API**: Documented, versioned API for easy integration.
 
-Core depends on ports and adapters. Adpaters provide implementaions of ports as spring beans
-which are scanned and injected into the core. So implementaion of ports must be annoted using
-@Component.
+---
+
+## 🛠 Tech Stack
+
+- **Backend**: Java 21, Spring Boot 3
+- **Database**: MySQL
+- **Security**: Spring Security, JWT
+- **Build Tool**: Maven
+---
+
+## 📖 API Documentation
+
+The full REST API documentation is available here:
+👉 [Conductor API Docs](https://bump.sh/conductor/doc/conductor-api/)
+
+---
+
+## ⚡ Getting Started
+
+### Prerequisites
+- Java 21+
+- MySQL
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/ayush27316/Conductor.git
+cd Conductor
+
+# Build and Run the project
+cd core
+./run.sh
+
 
